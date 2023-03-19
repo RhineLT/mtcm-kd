@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from loss_functions.losses import CrossEntropyLoss, dice_loss, jaccard_loss, KL_divergence
 
 def CrossEntropyLoss():
     return nn.CrossEntropyLoss()
