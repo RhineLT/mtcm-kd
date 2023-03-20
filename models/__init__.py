@@ -1,2 +1,3 @@
-from __future__ import absolute_import
-from . import *
+from .ResUNet import ResUNET_channel_attention
+
+__all__ = ['ResUNET_channel_attention']

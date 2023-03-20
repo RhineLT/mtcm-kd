@@ -1,8 +1,8 @@
 import torch 
 import torch.nn as nn
 
-from models.modules import  ResNetBlock
-from models.attention_modules import  ChannelGate
+from .modules import  ResNetBlock
+from .attention_modules import  ChannelGate
 
 
 

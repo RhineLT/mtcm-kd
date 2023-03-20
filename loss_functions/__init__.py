@@ -1,3 +1,2 @@
-from __future__ import absolute_import
-from . import *
+from .losses import  dice_loss, jaccard_loss, CrossEntropyLoss, KL_divergence
 
