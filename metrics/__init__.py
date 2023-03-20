@@ -1,1 +1,1 @@
-from .eval import calculate_dice_score, calculate_hd95_multi_class, save_history
+from .eval import calculate_dice_score, calculate_hd95_multi_class, save_history, multiclass_dice_coeff
