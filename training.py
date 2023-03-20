@@ -1,16 +1,10 @@
 import torch
-from torchvision import transforms as t
-import torch.nn as nn
-import torch.optim as optim
-import json
-from torch.utils.tensorboard import SummaryWriter
+
+
 
 
 from metrics import calculate_dice_score, calculate_hd95_multi_class, save_history, multiclass_dice_coeff
-from models import ResUNET_channel_attention
-from loss_functions import dice_loss, jaccard_loss, CrossEntropyLoss, KL_divergence
-from optimizer import Ranger
-from dataset import  get_loaders, spliting_data_5_folds, reshape_for_deep_supervision, reshape_3d
+
 
 
 def train_one_epoch(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train_loader, epoch, device, writer):
@@ -42,7 +36,7 @@ def train_one_epoch(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_diver
         
         output = model(data)[0]
         
-        loss = (dice_loss(output, target) + jaccard_loss(output, target) + ce_loss(output, target))/3.0
+        loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
         
         optimizer.zero_grad()
         loss.backward()
@@ -93,7 +87,7 @@ def validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, va
             
             output = model(data)[0]
             
-            loss = (dice_loss(output, target) + jaccard_loss(output, target) + ce_loss(output, target))/3.0
+            loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
             
             mean_loss += loss.detach().cpu().item()
             
