@@ -2,9 +2,6 @@ from .dataset import BraTS_Dataset
 from torch.utils.data import DataLoader
 
 
-
-
-
 def get_loaders(
     dataset_dir,
     batch_size,
