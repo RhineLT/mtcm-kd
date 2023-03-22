@@ -115,28 +115,7 @@ def run(config):
         
 
 if __name__ == "__main__":
-    ## config dictionary for model training
-    config = {
-    "model_name": "ResUNET_channel_attention",
-    "model_path": "mmcm_kd\\saved_models\\",
-    "data_path": "D:\\Saeed Ahmad Work\\MMCM_KD\\mmcm_kd\\BraTS_Dataset\\",
-    "data_split_path": "mmcm_kd\\data_splits\\",
-    "writer_path": "mmcm_kd\\runs\\",
-    "results_path": "mmcm_kd\\results\\",
-    "batch_size": 2,
-    "num_epochs": 100,
-    "image_height": 128,
-    "image_width": 128,
-    "image_depth": 128,
-    "model_params": {
-        "in_channels": 3,
-        "out_channels": 4,
-        "dropout": 0.3,
-        "attention": True,
-        "attention_type": "channel",
-        "learning_rate": 0.0001,
-        },
-    }
-
+    ## load config file
+    config = json.load(open("mmcm_kd//config.json"))
     #run the model   
     run(config=config)

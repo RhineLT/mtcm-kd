@@ -19,7 +19,8 @@ def get_loaders(
         data_dict=data_dict,
         data_type='train',
         transform = train_images_transform, 
-        target_transform = train_masks_transform)
+        target_transform = train_masks_transform,
+        )
 
     validation_ds = BraTS_Dataset(
         dataset_dir= dataset_dir, 
