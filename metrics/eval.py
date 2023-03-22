@@ -29,8 +29,17 @@ def dice_coeff(input: Tensor, target: Tensor, reduce_batch_first: bool = False, 
         return dice / input.shape[0]
 
 
+
+
+
 def multiclass_dice_coeff(preds: Tensor, target: Tensor, reduce_batch_first: bool = False, epsilon=1e-6):
     # Average of Dice coefficient for all classes
+    
+    whole_tumor_target = torch.where(target[1:] > 0, torch.tensor([1], device="cuda:0").float(), torch.tensor([0], device="cuda:0").float())
+    whole_tumor_preds = torch.where(preds[1:].argmax(1) > 0, torch.tensor([1], device="cuda:0").float(), torch.tensor([0], device="cuda:0").float())
+    
+    tumor_core_target = torch.where(target[1:] > 1, torch.tensor([1], device="cuda:0").float(), torch.tensor([0], device="cuda:0").float())
+    tumor_core_preds = torch.where(preds[1:].argmax(1) > 1, torch.tensor([1], device="cuda:0").float(), torch.tensor([0], device="cuda:0").float())
 
     target = F.one_hot(target, 4).permute(0,4,1,2,3).float()
     input = F.one_hot(preds.argmax(1), 4).permute(0,4,1,2,3).float()
@@ -60,13 +69,9 @@ def multiclass_dice_coeff(preds: Tensor, target: Tensor, reduce_batch_first: boo
         return new_tensor.to("cuda:0")
     
     
-    tumor_core_pred = change_to_two(input)
-    tumor_core_target = change_to_two(target)
-    tumor_core = dice_coeff(tumor_core_pred, tumor_core_target, reduce_batch_first, epsilon)
-    
-    whole_tumor_pred = change_to_one(input)
-    whole_tumor_target = change_to_one(target)
-    whole_tumor = dice_coeff(whole_tumor_pred, whole_tumor_target, reduce_batch_first, epsilon)
+   
+    tumor_core = dice_coeff(tumor_core_preds, tumor_core_target, reduce_batch_first, epsilon)
+    whole_tumor = dice_coeff(whole_tumor_preds, whole_tumor_target, reduce_batch_first, epsilon)
     
     
     

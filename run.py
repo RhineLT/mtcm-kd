@@ -12,7 +12,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from training import  Fit
 from models import ResUNET_channel_attention
-from loss_functions import dice_loss, jaccard_loss, CrossEntropyLoss, KL_divergence
+from loss_functions import dice_loss, jaccard_loss, CrossEntropyLoss, KL_divergence, combination_loss
 from optimizer import Ranger
 from dataset import  get_loaders, spliting_data_5_folds, reshape_for_deep_supervision, reshape_3d
 from metrics import calculate_dice_score, calculate_hd95_multi_class, save_history
@@ -68,7 +68,7 @@ def run(config):
     dice_loss_fn = dice_loss
     jaccard_loss_fn = jaccard_loss
     CrossEntropyLoss_fn = CrossEntropyLoss()
-    
+    combination_loss_fn = combination_loss
     for fold_index in range(5):
         
          ## get the data loaders
@@ -106,6 +106,7 @@ def run(config):
                       kl_divergence=None,
                       optimizer=optimizer,
                       epochs=EPOCHS,
+                      combination_loss=combination_loss_fn,
                       )
         
         save_history(history, config["results_path"] + config["model_name"] , epochs=EPOCHS, fold_index=fold_index)

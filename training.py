@@ -4,7 +4,7 @@ from metrics import calculate_dice_score, calculate_hd95_multi_class, multiclass
 
 
 
-def train_one_epoch(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train_loader, epoch, device, writer):
+def train_one_epoch(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train_loader, epoch, device, writer, combination_loss=None):
     
     
     """
@@ -33,7 +33,8 @@ def train_one_epoch(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_diver
         
         output = model(data)
         
-        loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
+        #loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
+        loss = combination_loss(target, output)
         
         optimizer.zero_grad()
         loss.backward()
@@ -57,7 +58,7 @@ def train_one_epoch(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_diver
     return mean_loss / len(train_loader)
 
 
-def validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, valid_loader, epoch, device, writer):
+def validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, valid_loader, epoch, device, writer, combination_loss=None):
     """
     param: model: model to train
     param: dice_loss: dice loss function
@@ -78,6 +79,12 @@ def validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, va
     model.eval()
     
     dice_dict = {}
+    dice_dict["ED"] = 0
+    dice_dict["ET"] = 0
+    dice_dict["N-NE"] = 0
+    dice_dict["mean"] = 0
+    dice_dict["whole_tumor"] = 0
+    dice_dict["tumor_core"] = 0
     
     with torch.no_grad():
         for idx, (data, target) in enumerate(valid_loader):
@@ -86,7 +93,8 @@ def validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, va
             
             output = model(data)
             
-            loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
+            #loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
+            loss = combination_loss(target, output)
             
             mean_loss += loss.detach().cpu().item()
             
@@ -97,12 +105,16 @@ def validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, va
             dice_dict['N-NE'] += temp_dice_dict['N-NE']
             dice_dict['ED'] += temp_dice_dict['ED']
             dice_dict['ET'] += temp_dice_dict['ET']
+            dice_dict['whole_tumor'] += temp_dice_dict['whole_tumor']
+            dice_dict['tumor_core'] += temp_dice_dict['tumor_core']
             
     
         dice_dict['mean'] /= len(valid_loader)
         dice_dict['N-NE'] /= len(valid_loader)
         dice_dict['ED'] /= len(valid_loader)
         dice_dict['ET'] /= len(valid_loader)
+        dice_dict['whole_tumor'] /= len(valid_loader)
+        dice_dict['tumor_core'] /= len(valid_loader)
         
         
         print(f"Epoch: {epoch} | Valid Loss: {mean_loss / len(valid_loader)}")
@@ -111,6 +123,8 @@ def validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, va
         print(f"N-NE dice score: {dice_dict['N-NE']}")
         print(f"ED dice score: {dice_dict['ED']}")
         print(f"ET dice score: {dice_dict['ET']}")
+        print(f"Whole tumor dice score: {dice_dict['whole_tumor']}")
+        print(f"Tumor core dice score: {dice_dict['tumor_core']}")
         
         print("===========================================")
         
@@ -121,7 +135,7 @@ def validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, va
 
 
 
-def Fit(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train_loader, valid_loader, epochs, device, writer):
+def Fit(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train_loader, valid_loader, epochs, device, writer, combination_loss=None):
     """
     param: model: model to train
     param: optimizer: optimizer to use
@@ -148,16 +162,16 @@ def Fit(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train
     
     
     for epoch in range(epochs):
-        train_loss = train_one_epoch(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train_loader, epoch, device, writer)
-        valid_loss, dice_dict = validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, valid_loader, epoch, device, writer)
+        train_loss = train_one_epoch(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train_loader, epoch, device, writer, combination_loss)
+        valid_loss, dice_dict = validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, valid_loader, epoch, device, writer, combination_loss)
         
         if valid_loss < best_loss:
             best_loss = valid_loss
-            torch.save(model.state_dict(), "best_loss.pth")
+            torch.save(model.state_dict(), "mmcm_kd\\saved_models\\best_loss.pth")
         
         if dice_dict['mean'] > best_dice:
             best_dice = dice_dict['mean']
-            torch.save(model.state_dict(), "best_dice.pth")
+            torch.save(model.state_dict(), "mmcm_kd\\saved_models\\best_dice.pth")
             
         
         

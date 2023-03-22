@@ -145,5 +145,45 @@ def KL_divergence(true, logits, eps=1e-7):
     return KL_loss
 
 
+def combination_loss(true, logits, weights=None, ignore=255, eps=1e-7, w1=1.0/3, w2=1.0/3, w3=1.0/3):
+    """
+    Computes the combination loss of dice loss, jaccard loss, and cross-entropy loss.
+    
+    Args:
+        true: a tensor of shape [B, 1, H, W, D].
+        logits: a tensor of shape [B, C, H, W, D]. Corresponds to
+            the raw output or logits of the model.
+        weights: a tensor of shape [C,]. The weights attributed to each class.
+        ignore: the class index to ignore.
+        eps: added to the denominator for numerical stability.
+        w1: the weight factor for dice loss.
+        w2: the weight factor for jaccard loss.
+        w3: the weight factor for cross-entropy loss.
+        
+    Returns:
+        combination_loss: the combination loss.
+    """
+    num_classes = logits.shape[1]
+    if num_classes == 1:
+        true_1_hot = torch.eye(num_classes + 1)[true.squeeze(1)]
+        true_1_hot = true_1_hot.permute(0, 3, 1, 2).float()
+        true_1_hot_f = true_1_hot[:, 0:1, :, :]
+        true_1_hot_s = true_1_hot[:, 1:2, :, :]
+        true_1_hot = torch.cat([true_1_hot_s, true_1_hot_f], dim=1)
+        pos_prob = torch.sigmoid(logits)
+        neg_prob = 1 - pos_prob
+        probas = torch.cat([pos_prob, neg_prob], dim=1)
+    else:
+        true_1_hot = torch.eye(num_classes)[true.squeeze(1).cpu()]
+        true_1_hot = true_1_hot.permute(0, 4, 1, 2,3).float()
 
+        probas = F.softmax(logits, dim=1)
+    true_1_hot = true_1_hot.type(logits.type())
+    dims = (0,) + tuple(range(2, true.ndimension()))
+    intersection = torch.sum(probas * true_1_hot, dims)
+    cardinality = torch.sum(probas + true_1_hot, dims)
+    dice = ((2. * intersection / (cardinality + eps)).mean())
+    jacc = ((intersection / (cardinality - intersection + eps)).mean())
+    ce = F.cross_entropy(logits.float(), true.long(), ignore_index=ignore, weight=weights)
+    return w1 * (1 - dice) + w2 * (1 - jacc) + w3 * ce
 
