@@ -49,11 +49,15 @@ def multiclass_dice_coeff(preds: Tensor, target: Tensor, reduce_batch_first: boo
     
     ## whole tumor
     def change_to_one(input):
-        input[:, 0, ...] = torch.where((input[:,0, ...] > 0) |(input[:,1, ...] > 0) | (input[:,2, ...] > 0), torch.tensor([1], device="cuda:0"), torch.tensor([0], device="cuda:0"))
-        return input[:, 0, ...]
+        zero_tensor = torch.tensor([0], device="cuda:0").float()
+        one_tensor = torch.tensor([1], device="cuda:0").float()
+        new_tensor = torch.where(input > 0 , one_tensor, zero_tensor)
+        return new_tensor.to("cuda:0")
     def change_to_two(input):
-        input[:, 1, ...] = torch.where((input[:,1, ...] > 0) | (input[:,2, ...] > 0), torch.tensor([1], device="cuda:0"), torch.tensor([0], device="cuda:0"))
-        return input[:, 1, ...]
+        zero_tensor = torch.tensor([0], device="cuda:0").float()
+        one_tensor = torch.tensor([1], device="cuda:0").float()
+        new_tensor = torch.where(torch.logical_or(input[:,1, ...] > 0, input[:,2, ...] > 0), one_tensor, zero_tensor)
+        return new_tensor.to("cuda:0")
     
     
     tumor_core_pred = change_to_two(input)
