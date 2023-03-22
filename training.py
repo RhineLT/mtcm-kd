@@ -1,9 +1,6 @@
 import torch
 
-
-
-
-from metrics import calculate_dice_score, calculate_hd95_multi_class, save_history, multiclass_dice_coeff
+from metrics import calculate_dice_score, calculate_hd95_multi_class, multiclass_dice_coeff
 
 
 
@@ -34,7 +31,7 @@ def train_one_epoch(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_diver
         data = data.to(device)
         target = target.to(device)
         
-        output = model(data)[0]
+        output = model(data)
         
         loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
         
@@ -53,6 +50,8 @@ def train_one_epoch(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_diver
             print(f"N-NE dice score: {dice_dict['N-NE']}")
             print(f"ED dice score: {dice_dict['ED']}")
             print(f"ET dice score: {dice_dict['ET']}")
+            print(f"Whole tumor dice score: {dice_dict['whole_tumor']}")
+            print(f"Tumor core dice score: {dice_dict['tumor_core']}")
             print("===========================================")
         
     return mean_loss / len(train_loader)
@@ -85,7 +84,7 @@ def validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, va
             data = data.to(device)
             target = target.to(device)
             
-            output = model(data)[0]
+            output = model(data)
             
             loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
             
@@ -160,7 +159,7 @@ def Fit(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train
             best_dice = dice_dict['mean']
             torch.save(model.state_dict(), "best_dice.pth")
             
-        save_history(train_loss, valid_loss, dice_dict, epoch)
+        
         
         train_losses.append(train_loss)
         validitation_losses.append(valid_loss)
@@ -170,5 +169,4 @@ def Fit(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train
         
     writer.close()
     print("Training Finished")
-    
     return history

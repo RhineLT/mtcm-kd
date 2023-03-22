@@ -45,12 +45,36 @@ def multiclass_dice_coeff(preds: Tensor, target: Tensor, reduce_batch_first: boo
         classwise_dice = dice_coeff(input[:, channel, ...], target[:, channel, ...], reduce_batch_first, epsilon)
         all_dice_score.append(classwise_dice)
         dice += classwise_dice
+        
+    
+    ## whole tumor
+    def change_to_one(input):
+        input[:, 0, ...] = torch.where((input[:,0, ...] > 0) |(input[:,1, ...] > 0) | (input[:,2, ...] > 0), torch.tensor([1], device="cuda:0"), torch.tensor([0], device="cuda:0"))
+        return input[:, 0, ...]
+    def change_to_two(input):
+        input[:, 1, ...] = torch.where((input[:,1, ...] > 0) | (input[:,2, ...] > 0), torch.tensor([1], device="cuda:0"), torch.tensor([0], device="cuda:0"))
+        return input[:, 1, ...]
+    
+    
+    tumor_core_pred = change_to_two(input)
+    tumor_core_target = change_to_two(target)
+    tumor_core = dice_coeff(tumor_core_pred, tumor_core_target, reduce_batch_first, epsilon)
+    
+    whole_tumor_pred = change_to_one(input)
+    whole_tumor_target = change_to_one(target)
+    whole_tumor = dice_coeff(whole_tumor_pred, whole_tumor_target, reduce_batch_first, epsilon)
+    
+    
+    
+    
     
     dice_dict = {}
     dice_dict['mean'] = dice / input.shape[1]
     dice_dict['N-NE'] = all_dice_score[0]
     dice_dict['ED'] = all_dice_score[1]
     dice_dict['ET'] = all_dice_score[2]
+    dice_dict['whole_tumor'] = whole_tumor
+    dice_dict['tumor_core'] = tumor_core
 
     return  dice_dict
     
@@ -63,6 +87,8 @@ def calculate_dice_score(model, loader, device, save_results=False, epoch=None, 
     dice_dict['N-NE'] = 0.0
     dice_dict['ED'] = 0.0
     dice_dict['ET'] = 0.0
+    dice_dict['whole_tumor'] = 0.0
+    dice_dict['tumor_core'] = 0.0
     
     model.eval()
     with torch.no_grad():
@@ -78,22 +104,30 @@ def calculate_dice_score(model, loader, device, save_results=False, epoch=None, 
             dice_dict['N-NE'] += batch_dict['N-NE']
             dice_dict['ED'] += batch_dict['ED']
             dice_dict['ET'] += batch_dict['ET']
+            dice_dict['whole_tumor'] += batch_dict['whole_tumor']
+            dice_dict['tumor_core'] += batch_dict['tumor_core']
     
 
     dice_dict['mean'] /= len(loader)
     dice_dict['N-NE'] /= len(loader)
     dice_dict['ED'] /= len(loader)
     dice_dict['ET'] /= len(loader)  
+    dice_dict['whole_tumor'] /= len(loader)
+    dice_dict['tumor_core'] /= len(loader)
 
     dice_dict['mean'] = dice_dict['mean'].detach().cpu().item()
     dice_dict['N-NE'] = dice_dict['N-NE'].detach().cpu().item()
     dice_dict['ED'] = dice_dict['ED'].detach().cpu().item()
     dice_dict['ET'] = dice_dict['ET'].detach().cpu().item()
+    dice_dict['whole_tumor'] = dice_dict['whole_tumor'].detach().cpu().item()
+    dice_dict['tumor_core'] = dice_dict['tumor_core'].detach().cpu().item()
 
     print(f"dice mean score: {dice_dict['mean']}")
     print(f"N-NE dice score: {dice_dict['N-NE']}")
     print(f"ED dice score: {dice_dict['ED']}")
     print(f"ET dice score: {dice_dict['ET']}")
+    print(f"whole tumor dice score: {dice_dict['whole_tumor']}")
+    print(f"tumor core dice score: {dice_dict['tumor_core']}")
 
     if save_results:
         json_file = json.dumps(dice_dict)
@@ -136,8 +170,8 @@ def calculate_hd95_multi_class(preds, target, spacing=None, connectivity=1):
 
 
 
-def save_history(history, model_name, epoch,fold_no):
+def save_history(history, model_name, epochs,fold_no):
     json_file = json.dumps(history)
-    f = open(f"./results/{model_name}/history_epoch_{epoch}_fold_no_{fold_no}.json", "w")
+    f = open(f"{model_name}/history_epoch_{epochs}_fold_no_{fold_no}.json", "w")
     f.write(json_file)
     f.close()

@@ -15,7 +15,7 @@ from models import ResUNET_channel_attention
 from loss_functions import dice_loss, jaccard_loss, CrossEntropyLoss, KL_divergence
 from optimizer import Ranger
 from dataset import  get_loaders, spliting_data_5_folds, reshape_for_deep_supervision, reshape_3d
-
+from metrics import calculate_dice_score, calculate_hd95_multi_class, save_history
 
 
 
@@ -67,7 +67,7 @@ def run(config):
 
     dice_loss_fn = dice_loss
     jaccard_loss_fn = jaccard_loss
-    CrossEntropyLoss_fn = CrossEntropyLoss
+    CrossEntropyLoss_fn = CrossEntropyLoss()
     
     for fold_index in range(5):
         
@@ -108,6 +108,7 @@ def run(config):
                       epochs=EPOCHS,
                       )
         
+        save_history(history, config["results_path"] + config["model_name"] , epochs=EPOCHS, fold_index=fold_index)
          
         
         
@@ -116,10 +117,11 @@ if __name__ == "__main__":
     ## config dictionary for model training
     config = {
     "model_name": "ResUNET_channel_attention",
-    "model_path": "./saved_models/",
+    "model_path": "mmcm_kd\\saved_models\\",
     "data_path": "D:\\Saeed Ahmad Work\\MMCM_KD\\mmcm_kd\\BraTS_Dataset\\",
-    "data_split_path": "./data_splits/",
-    "writer_path": "./runs/",
+    "data_split_path": "mmcm_kd\\data_splits\\",
+    "writer_path": "mmcm_kd\\runs\\",
+    "results_path": "mmcm_kd\\results\\",
     "batch_size": 2,
     "num_epochs": 100,
     "image_height": 128,
