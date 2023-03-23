@@ -4,7 +4,7 @@ from metrics import calculate_dice_score, calculate_hd95_multi_class, multiclass
 
 
 
-def train_one_epoch(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train_loader, epoch, device, writer, combination_loss=None):
+def train_one_epoch(model, optimizer, t1_model, tm1_optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train_loader, epoch, device, writer, combination_loss=None):
     
     
     """
@@ -31,10 +31,16 @@ def train_one_epoch(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_diver
         data = data.to(device)
         target = target.to(device)
         
-        output = model(data)
+        output = model(data[:, 1, ...].unsqueeze(1))
+        #teacher_output = t1_model(data[:, 0, ...].unsqueeze(1))
         
         #loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
         loss = combination_loss(target, output)
+        #teacher_loss = dice_loss(target, teacher_output)
+        
+       # tm1_optimizer.zero_grad()
+        #teacher_loss.backward()
+       # tm1_optimizer.step()
         
         optimizer.zero_grad()
         loss.backward()
@@ -54,6 +60,8 @@ def train_one_epoch(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_diver
             print(f"Whole tumor dice score: {dice_dict['whole_tumor']}")
             print(f"Tumor core dice score: {dice_dict['tumor_core']}")
             print("===========================================")
+            
+            
         
     return mean_loss / len(train_loader)
 
@@ -91,7 +99,7 @@ def validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, va
             data = data.to(device)
             target = target.to(device)
             
-            output = model(data)
+            output = model(data[:, 1, ...].unsqueeze(1))
             
             #loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
             loss = combination_loss(target, output)
@@ -135,7 +143,7 @@ def validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, va
 
 
 
-def Fit(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train_loader, valid_loader, epochs, device, writer, combination_loss=None):
+def Fit(model, optimizer,t1_model,tm1_optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train_loader, valid_loader, epochs, device, writer, combination_loss=None):
     """
     param: model: model to train
     param: optimizer: optimizer to use
@@ -162,7 +170,7 @@ def Fit(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train
     
     
     for epoch in range(epochs):
-        train_loss = train_one_epoch(model, optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train_loader, epoch, device, writer, combination_loss)
+        train_loss = train_one_epoch(model, optimizer, t1_model, tm1_optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train_loader, epoch, device, writer, combination_loss)
         valid_loss, dice_dict = validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, valid_loader, epoch, device, writer, combination_loss)
         
         if valid_loss < best_loss:

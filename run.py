@@ -89,13 +89,20 @@ def run(config):
         ## model configuration
         writer = SummaryWriter(log_dir=config["writer_path"] + config["model_name"] + f"\\fold_{fold_index}")
         
-        model = ResUNET_channel_attention(in_channels=config["model_params"]["in_channels"], out_channels=config["model_params"]["out_channels"],)
-        model = nn.DataParallel(model)
-        model = model.to(DEVICE)
+        student_model = ResUNET_channel_attention(in_channels=config["model_params"]["in_channels"], out_channels=config["model_params"]["out_channels"],)
+        student_model = nn.DataParallel(student_model)
+        student_model = student_model.to(DEVICE)
         
-        optimizer = Ranger(model.parameters(), lr=LEARNING_RATE)
+        #teacher_model = ResUNET_channel_attention(in_channels=config["model_params"]["in_channels"], out_channels=config["model_params"]["out_channels"],)
+        #teacher_model = nn.DataParallel(teacher_model)
+       # teacher_model = teacher_model.to(DEVICE)
         
-        history = Fit(model=model,
+        sm_optimizer = Ranger(student_model.parameters(), lr=LEARNING_RATE)
+       # tm_optimizer = Ranger(teacher_model.parameters(), lr=LEARNING_RATE)
+        
+        history = Fit(model= student_model,
+                      t1_model= None, #teacher_model,
+                      tm1_optimizer= None, #tm_optimizer,
                       train_loader=train_dl,
                       valid_loader=validation_dl,
                       device=DEVICE,
@@ -104,7 +111,7 @@ def run(config):
                       ce_loss=CrossEntropyLoss_fn,
                       jaccard_loss=jaccard_loss_fn,
                       kl_divergence=None,
-                      optimizer=optimizer,
+                      optimizer= sm_optimizer,
                       epochs=EPOCHS,
                       combination_loss=combination_loss_fn,
                       )
