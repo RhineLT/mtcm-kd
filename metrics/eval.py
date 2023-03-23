@@ -35,17 +35,29 @@ def dice_coeff(input: Tensor, target: Tensor, reduce_batch_first: bool = False, 
 def multiclass_dice_coeff(preds: Tensor, target: Tensor, reduce_batch_first: bool = False, epsilon=1e-6):
     # Average of Dice coefficient for all classes
     
-    whole_tumor_target = torch.where(target[1:] > 0, torch.tensor([1], device="cuda:0").float(), torch.tensor([0], device="cuda:0").float())
-    whole_tumor_preds = torch.where(preds[1:].argmax(1) > 0, torch.tensor([1], device="cuda:0").float(), torch.tensor([0], device="cuda:0").float())
+    zero_tensor = torch.tensor([0], device="cuda:0").float()
+    one_tensor = torch.tensor([1], device="cuda:0").float()
     
-    tumor_core_target = torch.where(target[1:] > 1, torch.tensor([1], device="cuda:0").float(), torch.tensor([0], device="cuda:0").float())
-    tumor_core_preds = torch.where(preds[1:].argmax(1) > 1, torch.tensor([1], device="cuda:0").float(), torch.tensor([0], device="cuda:0").float())
 
     target = F.one_hot(target, 4).permute(0,4,1,2,3).float()
     input = F.one_hot(preds.argmax(1), 4).permute(0,4,1,2,3).float()
-
+    
+    
     input = input[:, 1:, :, :, :]
     target = target[:, 1:, :, :, :]
+    
+   
+    # Whole tumor target and preds, such that all the tumor classes are considered as one class
+    whole_tumor_target = torch.any(target[:, 1:], dim=1, keepdim=True ).float()
+    whole_tumor_preds = ((preds.argmax(dim=1) == 1) | (preds.argmax(dim=1) == 2) | (preds.argmax(dim=1) == 3)).float().unsqueeze(1)
+
+
+    # Tumor core target and preds, such that if the last two classes are present, then it is considered as tumor core
+    tumor_core_target = (torch.any(target[:, 2:], dim=1, keepdim=True) |
+                     torch.all(target[:, 1:], dim=1, keepdim=True)).float()
+    tumor_core_preds = ((preds.argmax(dim=1) == 2) | (preds.argmax(dim=1) == 3)).float().unsqueeze(1)
+
+    
 
     assert input.size() == target.size()
     dice = 0
@@ -55,26 +67,8 @@ def multiclass_dice_coeff(preds: Tensor, target: Tensor, reduce_batch_first: boo
         all_dice_score.append(classwise_dice)
         dice += classwise_dice
         
-    
-    ## whole tumor
-    def change_to_one(input):
-        zero_tensor = torch.tensor([0], device="cuda:0").float()
-        one_tensor = torch.tensor([1], device="cuda:0").float()
-        new_tensor = torch.where(input > 0 , one_tensor, zero_tensor)
-        return new_tensor.to("cuda:0")
-    def change_to_two(input):
-        zero_tensor = torch.tensor([0], device="cuda:0").float()
-        one_tensor = torch.tensor([1], device="cuda:0").float()
-        new_tensor = torch.where(torch.logical_or(input[:,1, ...] > 0, input[:,2, ...] > 0), one_tensor, zero_tensor)
-        return new_tensor.to("cuda:0")
-    
-    
-   
     tumor_core = dice_coeff(tumor_core_preds, tumor_core_target, reduce_batch_first, epsilon)
     whole_tumor = dice_coeff(whole_tumor_preds, whole_tumor_target, reduce_batch_first, epsilon)
-    
-    
-    
     
     
     dice_dict = {}
