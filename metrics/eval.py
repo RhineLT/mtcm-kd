@@ -48,13 +48,12 @@ def multiclass_dice_coeff(preds: Tensor, target: Tensor, reduce_batch_first: boo
     
    
     # Whole tumor target and preds, such that all the tumor classes are considered as one class
-    whole_tumor_target = torch.any(target[:, 1:], dim=1, keepdim=True ).float()
+    whole_tumor_target = torch.any(target, dim=1, keepdim=True ).float()
     whole_tumor_preds = ((preds.argmax(dim=1) == 1) | (preds.argmax(dim=1) == 2) | (preds.argmax(dim=1) == 3)).float().unsqueeze(1)
 
 
     # Tumor core target and preds, such that if the last two classes are present, then it is considered as tumor core
-    tumor_core_target = (torch.any(target[:, 2:], dim=1, keepdim=True) |
-                     torch.all(target[:, 1:], dim=1, keepdim=True)).float()
+    tumor_core_target = (torch.any(target[:, 1:], dim=1, keepdim=True)).float()
     tumor_core_preds = ((preds.argmax(dim=1) == 2) | (preds.argmax(dim=1) == 3)).float().unsqueeze(1)
 
     
