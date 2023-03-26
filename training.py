@@ -24,6 +24,8 @@ def train_one_epoch(model, optimizer, t1_model, tm1_optimizer, dice_loss, jaccar
     Description: train one epoch
     
     """
+    KL_Loss = False
+    
     mean_loss = 0
     model.train()
     
@@ -32,15 +34,22 @@ def train_one_epoch(model, optimizer, t1_model, tm1_optimizer, dice_loss, jaccar
         target = target.to(device)
         
         output = model(data[:, 1, ...].unsqueeze(1))
-        #teacher_output = t1_model(data[:, 0, ...].unsqueeze(1))
-        
+        teacher_output2 = t1_model(data[:, 0, ...].unsqueeze(1))
+        if idx % 50 == 0:
+            t1_model.eval()
+            with torch.no_grad():
+                teacher_output = t1_model(data[:, 0, ...].unsqueeze(1))
+                kl_divergence_loss = torch.nn.KLDivLoss(reduction='batchmean')(torch.log_softmax(output, dim=1), torch.softmax(teacher_output, dim=1))
+                KL_Loss = True
+        else: 
+            KL_Loss = False
         #loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
-        loss = combination_loss(target, output)
-        #teacher_loss = dice_loss(target, teacher_output)
+        loss = (combination_loss(target, output) + 0.01 * kl_divergence_loss) if KL_Loss else combination_loss(target, output)
+        teacher_loss = dice_loss(target, teacher_output2)
         
-       # tm1_optimizer.zero_grad()
-        #teacher_loss.backward()
-       # tm1_optimizer.step()
+        tm1_optimizer.zero_grad()
+        teacher_loss.backward()
+        tm1_optimizer.step()
         
         optimizer.zero_grad()
         loss.backward()

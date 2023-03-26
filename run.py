@@ -60,10 +60,6 @@ def run(config):
         with open(config["data_split_path"] + "folds_data.json", "r") as file:
             data_split = json.load(file)
             
-            
-          
-   
-    
 
     dice_loss_fn = dice_loss
     jaccard_loss_fn = jaccard_loss
@@ -93,16 +89,16 @@ def run(config):
         student_model = nn.DataParallel(student_model)
         student_model = student_model.to(DEVICE)
         
-        #teacher_model = ResUNET_channel_attention(in_channels=config["model_params"]["in_channels"], out_channels=config["model_params"]["out_channels"],)
-        #teacher_model = nn.DataParallel(teacher_model)
-       # teacher_model = teacher_model.to(DEVICE)
+        teacher_model = ResUNET_channel_attention(in_channels=config["model_params"]["in_channels"], out_channels=config["model_params"]["out_channels"],)
+        teacher_model = nn.DataParallel(teacher_model)
+        teacher_model = teacher_model.to(DEVICE)
         
         sm_optimizer = Ranger(student_model.parameters(), lr=LEARNING_RATE)
-       # tm_optimizer = Ranger(teacher_model.parameters(), lr=LEARNING_RATE)
+        tm_optimizer = Ranger(teacher_model.parameters(), lr=LEARNING_RATE)
         
         history = Fit(model= student_model,
-                      t1_model= None, #teacher_model,
-                      tm1_optimizer= None, #tm_optimizer,
+                      t1_model= teacher_model,
+                      tm1_optimizer= tm_optimizer,
                       train_loader=train_dl,
                       valid_loader=validation_dl,
                       device=DEVICE,
