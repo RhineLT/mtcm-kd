@@ -43,11 +43,15 @@ class BraTS_Dataset(Dataset):
         if self.transfrom:
             image_volume = self.transfrom(image_volume)
 
-        ## min max scaler
-        image_volume = (image_volume - image_volume.min()) / (image_volume.max() - image_volume.min())
+        ## min max scaler for only non zero values
+        if image_volume[image_volume != 0].min() != image_volume[image_volume != 0].max():
+            image_volume[image_volume != 0] = (image_volume[image_volume != 0] - image_volume[image_volume != 0].min()) / (image_volume[image_volume != 0].max() - image_volume[image_volume != 0].min())
         
-        if self.target_transform:   
+        
+        if self.target_transform:  
+            image_mask = image_mask.unsqueeze(0) 
             image_mask = self.target_transform(image_mask)
+            image_mask = image_mask.squeeze(0)
         
         image_mask = image_mask.long()
         #image_volume = image_volume.type(torch.float16)

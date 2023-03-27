@@ -4,7 +4,7 @@ from metrics import calculate_dice_score, calculate_hd95_multi_class, multiclass
 
 
 
-def train_one_epoch(model, optimizer, t1_model, tm1_optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train_loader, epoch, device, writer, combination_loss=None):
+def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_loader, epoch, device, writer):
     
     
     """
@@ -27,33 +27,41 @@ def train_one_epoch(model, optimizer, t1_model, tm1_optimizer, dice_loss, jaccar
     KL_Loss = False
     
     mean_loss = 0
-    model.train()
+    models['student_model'].train()
     
     for idx, (data, target) in enumerate(train_loader):
         data = data.to(device)
         target = target.to(device)
         
-        output = model(data[:, 1, ...].unsqueeze(1))
-        teacher_output2 = t1_model(data[:, 0, ...].unsqueeze(1))
-        if idx % 50 == 0:
-            t1_model.eval()
-            with torch.no_grad():
-                teacher_output = t1_model(data[:, 0, ...].unsqueeze(1))
-                kl_divergence_loss = torch.nn.KLDivLoss(reduction='batchmean')(torch.log_softmax(output, dim=1), torch.softmax(teacher_output, dim=1))
-                KL_Loss = True
-        else: 
-            KL_Loss = False
+        output = models['student_model'](data[:, 1, ...].unsqueeze(1))
+        #teacher_output2 = t1_model(data[:, 0, ...].unsqueeze(1))
+       # if idx % 50 == 0:
+          #  t1_model.eval()
+           # with torch.no_grad():
+                #teacher_output = t1_model(data[:, 0, ...].unsqueeze(1))
+               # kl_divergence_loss = torch.nn.KLDivLoss(reduction='batchmean')(torch.log_softmax(output, dim=1), torch.softmax(teacher_output, dim=1))
+               # KL_Loss = True
+        #else: 
+           # KL_Loss = False
         #loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
-        loss = (combination_loss(target, output) + 0.01 * kl_divergence_loss) if KL_Loss else combination_loss(target, output)
-        teacher_loss = dice_loss(target, teacher_output2)
+        loss = loss_functions['combination_loss'](target, output) #+ 0.01 * kl_divergence_loss) if KL_Loss else combination_loss(target, output)
+       # teacher_loss = dice_loss(target, teacher_output2)
         
-        tm1_optimizer.zero_grad()
-        teacher_loss.backward()
-        tm1_optimizer.step()
+       # tm1_optimizer.zero_grad()
+       #teacher_loss.backward()
+        #tm1_optimizer.step()
         
-        optimizer.zero_grad()
+        # zero the parameter gradients
+        optimizers['student_optimizer'].zero_grad()
+        
+        # backward pass
         loss.backward()
-        optimizer.step()
+        
+        ## update weights
+        optimizers['student_optimizer'].step()
+        
+        ## update learning rate
+        lr_shedulars['one_cycle'].step()
         
         mean_loss += loss.detach().cpu().item()
         
@@ -75,7 +83,7 @@ def train_one_epoch(model, optimizer, t1_model, tm1_optimizer, dice_loss, jaccar
     return mean_loss / len(train_loader)
 
 
-def validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, valid_loader, epoch, device, writer, combination_loss=None):
+def validitation_loss(models, loss_functions, lr_shedulars, valid_loader, epoch, device, writer):
     """
     param: model: model to train
     param: dice_loss: dice loss function
@@ -93,7 +101,7 @@ def validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, va
     
     """
     mean_loss = 0
-    model.eval()
+    models['student_model'].eval()
     
     dice_dict = {}
     dice_dict["ED"] = 0
@@ -108,10 +116,10 @@ def validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, va
             data = data.to(device)
             target = target.to(device)
             
-            output = model(data[:, 1, ...].unsqueeze(1))
+            output = models['student_model'](data[:, 1, ...].unsqueeze(1))
             
             #loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
-            loss = combination_loss(target, output)
+            loss = loss_functions['combination_loss'](target, output)
             
             mean_loss += loss.detach().cpu().item()
             
@@ -125,7 +133,11 @@ def validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, va
             dice_dict['whole_tumor'] += temp_dice_dict['whole_tumor']
             dice_dict['tumor_core'] += temp_dice_dict['tumor_core']
             
-    
+        
+        
+        ## update learning rate
+        lr_shedulars['plateau'].step(mean_loss / len(valid_loader))
+        
         dice_dict['mean'] /= len(valid_loader)
         dice_dict['N-NE'] /= len(valid_loader)
         dice_dict['ED'] /= len(valid_loader)
@@ -152,7 +164,7 @@ def validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, va
 
 
 
-def Fit(model, optimizer,t1_model,tm1_optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train_loader, valid_loader, epochs, device, writer, combination_loss=None):
+def Fit(models, optimizers, loss_functions, lr_schedulars, train_loader, valid_loader, epochs, device, writer):
     """
     param: model: model to train
     param: optimizer: optimizer to use
@@ -179,16 +191,16 @@ def Fit(model, optimizer,t1_model,tm1_optimizer, dice_loss, jaccard_loss, ce_los
     
     
     for epoch in range(epochs):
-        train_loss = train_one_epoch(model, optimizer, t1_model, tm1_optimizer, dice_loss, jaccard_loss, ce_loss, kl_divergence, train_loader, epoch, device, writer, combination_loss)
-        valid_loss, dice_dict = validitation_loss(model, dice_loss, jaccard_loss, ce_loss, kl_divergence, valid_loader, epoch, device, writer, combination_loss)
+        train_loss = train_one_epoch(models, optimizers, loss_functions, lr_schedulars, train_loader, epoch, device, writer)
+        valid_loss, dice_dict = validitation_loss(models, loss_functions,lr_schedulars, valid_loader, epoch, device, writer,)
         
         if valid_loss < best_loss:
             best_loss = valid_loss
-            torch.save(model.state_dict(), "mmcm_kd\\saved_models\\best_loss.pth")
+            torch.save(models['student_model'].state_dict(), "mmcm_kd\\saved_models\\best_loss.pth")
         
         if dice_dict['mean'] > best_dice:
             best_dice = dice_dict['mean']
-            torch.save(model.state_dict(), "mmcm_kd\\saved_models\\best_dice.pth")
+            torch.save(models['student_model'].state_dict(), "mmcm_kd\\saved_models\\best_dice.pth")
             
         
         
