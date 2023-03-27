@@ -59,10 +59,10 @@ def run(config):
     general_transforms = t.Compose([
        t.Lambda(reshape_volume),
        ## augmentation for 3d volume  data
-        rotation_scale_transform,
-        elastic_transform,
-        brightness_transform,
-        gamma_transform,
+       # rotation_scale_transform,
+       # elastic_transform,
+       # brightness_transform,
+       # gamma_transform,
        
     ])
     

@@ -33,7 +33,7 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
         data = data.to(device)
         target = target.to(device)
         
-        output = models['student_model'](data[:, 1, ...].unsqueeze(1))
+        output = models['student_model'](data )#.unsqueeze(1))
         #teacher_output2 = t1_model(data[:, 0, ...].unsqueeze(1))
        # if idx % 50 == 0:
           #  t1_model.eval()
@@ -60,8 +60,7 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
         ## update weights
         optimizers['student_optimizer'].step()
         
-        ## update learning rate
-        lr_shedulars['one_cycle'].step()
+        
         
         mean_loss += loss.detach().cpu().item()
         
@@ -78,7 +77,11 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
             print(f"Tumor core dice score: {dice_dict['tumor_core']}")
             print("===========================================")
             
-            
+    
+    ## update learning rate
+    lr_shedulars['one_cycle'].step()
+    print(f"Previous learning rate: {lr_shedulars['one_cycle'].get_last_lr()}")
+    print(f"Learning rate: {lr_shedulars['one_cycle'].get_lr()}")
         
     return mean_loss / len(train_loader)
 
@@ -116,7 +119,7 @@ def validitation_loss(models, loss_functions, lr_shedulars, valid_loader, epoch,
             data = data.to(device)
             target = target.to(device)
             
-            output = models['student_model'](data[:, 1, ...].unsqueeze(1))
+            output = models['student_model'](data) #[:, 1, ...].unsqueeze(1))
             
             #loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
             loss = loss_functions['combination_loss'](target, output)
@@ -137,6 +140,8 @@ def validitation_loss(models, loss_functions, lr_shedulars, valid_loader, epoch,
         
         ## update learning rate
         lr_shedulars['plateau'].step(mean_loss / len(valid_loader))
+        print("Previous learning rate: ", lr_shedulars['plateau'].optimizer.param_groups[0]['lr'])
+        print('Learning rate: ', lr_shedulars['plateau'].get_lr())
         
         dice_dict['mean'] /= len(valid_loader)
         dice_dict['N-NE'] /= len(valid_loader)
