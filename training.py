@@ -139,9 +139,10 @@ def validitation_loss(models, loss_functions, lr_shedulars, valid_loader, epoch,
         
         
         ## update learning rate
-        lr_shedulars['plateau'].step(mean_loss / len(valid_loader))
         print("Previous learning rate: ", lr_shedulars['plateau'].optimizer.param_groups[0]['lr'])
-        print('Learning rate: ', lr_shedulars['plateau'].get_lr())
+        lr_shedulars['plateau'].step(mean_loss / len(valid_loader))
+        print("Learning rate: ", lr_shedulars['plateau'].optimizer.param_groups[0]['lr'])
+        
         
         dice_dict['mean'] /= len(valid_loader)
         dice_dict['N-NE'] /= len(valid_loader)

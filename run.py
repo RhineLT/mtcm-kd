@@ -16,7 +16,7 @@ from loss_functions import dice_loss, jaccard_loss, CrossEntropyLoss, KL_diverge
 from optimizer import Ranger
 from dataset import  get_loaders, spliting_data_5_folds, reshape_for_deep_supervision, reshape_3d
 from metrics import calculate_dice_score, calculate_hd95_multi_class, save_history
-
+from utils import initialize_weights
 
 
 def run(config):
@@ -58,9 +58,14 @@ def run(config):
     ## transforms
     general_transforms = t.Compose([
        t.Lambda(reshape_volume),
+    ])
+    
+    ## transforms
+    train_transforms = t.Compose([
+       t.Lambda(reshape_volume),
        ## augmentation for 3d volume  data
-       # rotation_scale_transform,
-       # elastic_transform,
+        rotation_scale_transform,
+        elastic_transform,
        # brightness_transform,
        # gamma_transform,
        
@@ -95,8 +100,8 @@ def run(config):
             dataset_dir=config["data_path"],
             batch_size=BATCH_SIZE,
             data_dict=data_split[fold_index],
-            train_images_transform = general_transforms,
-            train_masks_transform = general_transforms,
+            train_images_transform = train_transforms,
+            train_masks_transform = train_transforms,
             valid_images_transform = general_transforms,
             valid_masks_transform = general_transforms,
             test_images_transform = general_transforms,
@@ -111,6 +116,7 @@ def run(config):
         student_model = ResUNET_channel_attention(in_channels=config["model_params"]["in_channels"], out_channels=config["model_params"]["out_channels"],)
         student_model = nn.DataParallel(student_model)
         student_model = student_model.to(DEVICE)
+        student_model.apply(initialize_weights)
         
         #teacher_model = ResUNET_channel_attention(in_channels=config["model_params"]["in_channels"], out_channels=config["model_params"]["out_channels"],)
         #teacher_model = nn.DataParallel(teacher_model)

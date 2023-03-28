@@ -50,9 +50,9 @@ class BraTS_Dataset(Dataset):
         
         
         if self.target_transform:  
-            #image_mask = image_mask.unsqueeze(0) 
+            image_mask = image_mask.unsqueeze(0) 
             image_mask = self.target_transform(image_mask)
-            #image_mask = image_mask.squeeze(0)
+            image_mask = image_mask.squeeze(0)
         
         image_mask = image_mask.long()
         #image_volume = image_volume.type(torch.float16)

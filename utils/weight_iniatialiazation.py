@@ -7,6 +7,7 @@ __all__ = ['initialize_weights']
 def initialize_weights(model):
     """Initialize network weights.
     :param model: network to be initialized
+    return: model with initialized weights
     
     Description: Initialize models weights with xavier initialization
     """
@@ -21,3 +22,5 @@ def initialize_weights(model):
         elif isinstance(m, nn.Linear):
             init.xavier_normal_(m.weight.data)
             init.constant_(m.bias.data, 0.0)
+
+   # return model
