@@ -51,9 +51,9 @@ def run(config):
         tio.RandomElasticDeformation(num_control_points=(7, 7, 7), max_displacement=(5, 5, 5)),
     ])
 
-    brightness_transform = t.Lambda(lambda x: torch.clamp(x + 0.2 * torch.randn_like(x), 0, 1))
+    #brightness_transform = t.Lambda(lambda x: torch.clamp(x + 0.2 * torch.randn_like(x), 0, 1))
 
-    gamma_transform = t.Lambda(lambda x: torch.pow(x, 0.7))
+    #gamma_transform = t.Lambda(lambda x: torch.pow(x, 0.7))
     
     ## transforms
     general_transforms = t.Compose([
@@ -122,7 +122,7 @@ def run(config):
         #teacher_model = nn.DataParallel(teacher_model)
         #teacher_model = teacher_model.to(DEVICE)
         
-        sm_optimizer = Ranger(student_model.parameters(), lr=LEARNING_RATE)
+        sm_optimizer = optim.Adam(student_model.parameters(), lr=LEARNING_RATE, weight_decay=1e-6)  #Ranger(student_model.parameters(), lr=LEARNING_RATE, weight_decay=1e-4)
         #tm_optimizer = Ranger(teacher_model.parameters(), lr=LEARNING_RATE)
         
         
