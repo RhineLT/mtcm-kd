@@ -64,8 +64,8 @@ def run(config):
     train_transforms = t.Compose([
        t.Lambda(reshape_volume),
        ## augmentation for 3d volume  data
-        rotation_scale_transform,
-        elastic_transform,
+        #rotation_scale_transform,
+       # elastic_transform,
        # brightness_transform,
        # gamma_transform,
        
@@ -119,12 +119,12 @@ def run(config):
         student_model = student_model.to(DEVICE)
         student_model.apply(initialize_weights)
         
-        teacher_model = ResUNET_channel_attention(in_channels=config["model_params"]["in_channels"], out_channels=config["model_params"]["out_channels"],)
-        teacher_model = nn.DataParallel(teacher_model)
-        teacher_model = teacher_model.to(DEVICE)
+        #teacher_model = ResUNET_channel_attention(in_channels=config["model_params"]["in_channels"], out_channels=config["model_params"]["out_channels"],)
+        #teacher_model = nn.DataParallel(teacher_model)
+        #teacher_model = teacher_model.to(DEVICE)
         
         sm_optimizer = optim.Adam(student_model.parameters(), lr=LEARNING_RATE, weight_decay=1e-6)  #Ranger(student_model.parameters(), lr=LEARNING_RATE, weight_decay=1e-4)
-        tm_optimizer = optim.Adam(teacher_model.parameters(), lr=LEARNING_RATE, weight_decay=1e-6)   #Ranger(teacher_model.parameters(), lr=LEARNING_RATE)
+       # tm_optimizer = optim.Adam(teacher_model.parameters(), lr=LEARNING_RATE, weight_decay=1e-6)   #Ranger(teacher_model.parameters(), lr=LEARNING_RATE)
         
         
         ### learning schedulars 
@@ -132,8 +132,8 @@ def run(config):
         lr_scheduler_plateau = ReduceLROnPlateau(sm_optimizer, mode="min", factor=0.1, patience=5, verbose=True)
         
         
-        models = {"student_model": student_model, "teacher_model": teacher_model}
-        optimizers = {"student_optimizer": sm_optimizer, "teacher_optimizer": tm_optimizer}
+        models = {"student_model": student_model, "teacher_model": None}
+        optimizers = {"student_optimizer": sm_optimizer, "teacher_optimizer": None}
         loss_functions = {"dice_loss": dice_loss_fn, "jaccard_loss": jaccard_loss_fn, "cross_entropy_loss": CrossEntropyLoss_fn, "combination_loss": combination_loss_fn}
         lr_schedulars = {"one_cycle": lr_scheduler_one_cycle, "plateau": lr_scheduler_plateau}
         
