@@ -69,20 +69,19 @@ def spliting_data_5_folds(dataset_dir):
     folds_data = []
     folders = os.listdir(dataset_dir)
 
-    train_valid_folders, test_folder, _ , _ = train_test_split(folders, folders, random_state=20, test_size=0.20)
+    #train_valid_folders, test_folder, _ , _ = train_test_split(folders, folders, random_state=20, test_size=0.20)
 
     kfold = KFold(n_splits=5, shuffle=True, random_state=20)
 
-    indices = kfold.split(train_valid_folders, train_valid_folders)
+    indices = kfold.split(folders, folders)
 
     for train_indices, valid_indices in indices:
-        train_samples = [train_valid_folders[index] for index in train_indices]
-        valid_samples = [train_valid_folders[index] for index in valid_indices]
+        train_samples = [folders[index] for index in train_indices]
+        valid_samples = [folders[index] for index in valid_indices]
 
         folds_data.append({
             "train_samples": train_samples,
             "valid_samples": valid_samples,
-            "test_samples": test_folder,
         })
 
     return folds_data

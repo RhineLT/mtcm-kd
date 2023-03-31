@@ -1,7 +1,7 @@
 import torch
 
 from metrics import calculate_dice_score, calculate_hd95_multi_class, multiclass_dice_coeff
-
+import json
 
 
 def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_loader, epoch, device, writer):
@@ -172,7 +172,7 @@ def validitation_loss(models, loss_functions, lr_shedulars, valid_loader, epoch,
 
 
 
-def Fit(models, optimizers, loss_functions, lr_schedulars, train_loader, valid_loader, epochs, device, writer):
+def Fit(models, optimizers, loss_functions, lr_schedulars, train_loader, valid_loader, epochs, device, writer, model_name):
     """
     param: model: model to train
     param: optimizer: optimizer to use
@@ -194,8 +194,16 @@ def Fit(models, optimizers, loss_functions, lr_schedulars, train_loader, valid_l
     best_loss = 100000
     best_dice = 0
     
+    ## results path
+    results_path = "mmcm_kd\\results"
+    models_path = "mmcm_kd\\saved_models\\"
+    
     train_losses = []
     validitation_losses = []
+    
+    
+    ### patience for early stopping
+    patience = 5
     
     
     for epoch in range(epochs):
@@ -211,9 +219,22 @@ def Fit(models, optimizers, loss_functions, lr_schedulars, train_loader, valid_l
             torch.save(models['student_model'].state_dict(), "mmcm_kd\\saved_models\\best_dice.pth")
             
         
+        ## save the model 
+        torch.save(models['student_model'].state_dict(), f"mmcm_kd\\saved_models\\{model_name}\\model_{epoch}.pth")
+        ## dump the dice dict to json file
+        with open(f"mmcm_kd\\saved_models\\{model_name}\\dice_dict_{epoch}.json", "w") as f:
+            json.dump(dice_dict, f)
+        
+        
         
         train_losses.append(train_loss)
         validitation_losses.append(valid_loss)
+        
+        ## early stopping condition for valid loss
+        if epoch > patience:
+            if validitation_losses[-patience] < validitation_losses[-1]:
+                print("Early stopping")
+                break
         
         
     history = {'epochs': epochs, 'train_loss': train_losses, 'valid_loss': validitation_losses}
