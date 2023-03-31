@@ -82,10 +82,10 @@ def run(config):
         dict_to_json = json.dumps(data_split)
         
         ## save the json file
-        with open(config["data_split_path"] + "folds_data.json", "w") as file:
+        with open(config["data_split_path"] + "//folds_data.json", "w") as file:
             file.write(dict_to_json)
     else:
-        with open(config["data_split_path"] + "folds_data.json", "r") as file:
+        with open(config["data_split_path"] + "//folds_data.json", "r") as file:
             data_split = json.load(file)
             
 
@@ -112,28 +112,32 @@ def run(config):
         
 
         ## model configuration
-        writer = SummaryWriter(log_dir=config["writer_path"] + config["model_name"] + f"\\fold_{fold_index}")
+        writer = SummaryWriter(log_dir=config["writer_path"] + "//" + config["model_name"] + "//" +f"fold_{fold_index}")
         
         student_model = ResUNET_channel_attention(in_channels=config["model_params"]["in_channels"], out_channels=config["model_params"]["out_channels"],)
         student_model = nn.DataParallel(student_model)
         student_model = student_model.to(DEVICE)
         student_model.apply(initialize_weights)
         
-        #teacher_model = ResUNET_channel_attention(in_channels=config["model_params"]["in_channels"], out_channels=config["model_params"]["out_channels"],)
-        #teacher_model = nn.DataParallel(teacher_model)
-        #teacher_model = teacher_model.to(DEVICE)
+        teacher_model1 = ResUNET_channel_attention(in_channels=config["model_params"]["in_channels"], out_channels=config["model_params"]["out_channels"],)
+        teacher_model1 = nn.DataParallel(teacher_model1)
+        teacher_model1 = teacher_model1.to(DEVICE)
+        
+        teacher_model2 = ResUNET_channel_attention(in_channels=config["model_params"]["in_channels"], out_channels=config["model_params"]["out_channels"],)
+        teacher_model2 = nn.DataParallel(teacher_model2)
+        teacher_model2 = teacher_model2.to(DEVICE)
         
         sm_optimizer = optim.Adam(student_model.parameters(), lr=LEARNING_RATE, weight_decay=1e-6)  #Ranger(student_model.parameters(), lr=LEARNING_RATE, weight_decay=1e-4)
-       # tm_optimizer = optim.Adam(teacher_model.parameters(), lr=LEARNING_RATE, weight_decay=1e-6)   #Ranger(teacher_model.parameters(), lr=LEARNING_RATE)
-        
+        tm_optimizer1 = optim.Adam(teacher_model1.parameters(), lr=LEARNING_RATE, weight_decay=1e-6)   #Ranger(teacher_model.parameters(), lr=LEARNING_RATE)
+        tm_optimizer2 = optim.Adam(teacher_model2.parameters(), lr=LEARNING_RATE, weight_decay=1e-6)   #Ranger(teacher_model.parameters(), lr=LEARNING_RATE)
         
         ### learning schedulars 
         lr_scheduler_one_cycle = OneCycleLR(sm_optimizer, max_lr=LEARNING_RATE, steps_per_epoch=len(train_dl), epochs=EPOCHS)
         lr_scheduler_plateau = ReduceLROnPlateau(sm_optimizer, mode="min", factor=0.1, patience=5, verbose=True)
         
         
-        models = {"student_model": student_model, "teacher_model": None}
-        optimizers = {"student_optimizer": sm_optimizer, "teacher_optimizer": None}
+        models = {"student_model": student_model, "teacher_model1": teacher_model1, "teacher_model2": teacher_model2}
+        optimizers = {"student_optimizer": sm_optimizer, "teacher_optimizer1": tm_optimizer1, "teacher_optimizer2": tm_optimizer2}
         loss_functions = {"dice_loss": dice_loss_fn, "jaccard_loss": jaccard_loss_fn, "cross_entropy_loss": CrossEntropyLoss_fn, "combination_loss": combination_loss_fn}
         lr_schedulars = {"one_cycle": lr_scheduler_one_cycle, "plateau": lr_scheduler_plateau}
         
@@ -157,6 +161,6 @@ def run(config):
 
 if __name__ == "__main__":
     ## load config file
-    config = json.load(open("mmcm_kd//config.json"))
+    config = json.load(open("config.json"))
     #run the model   
     run(config=config)
