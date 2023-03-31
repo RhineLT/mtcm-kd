@@ -10,8 +10,8 @@ def get_loaders(
     train_masks_transform,
     valid_images_transform,
     valid_masks_transform,
-    test_images_transform,
-    test_masks_transform,
+   # test_images_transform,
+   # test_masks_transform,
     ):
 
     train_ds = BraTS_Dataset(
@@ -29,12 +29,12 @@ def get_loaders(
         transform = valid_images_transform, 
         target_transform = valid_masks_transform)
 
-    test_ds = BraTS_Dataset(
-        dataset_dir= dataset_dir, 
-        data_dict=data_dict,
-        data_type='test',
-        transform = test_images_transform, 
-        target_transform = test_masks_transform)
+    #test_ds = BraTS_Dataset(
+        #dataset_dir= dataset_dir, 
+        #data_dict=data_dict,
+        #data_type='test',
+        #transform = test_images_transform, 
+        #target_transform = test_masks_transform)
     
     
     train_dl = DataLoader(
@@ -51,11 +51,11 @@ def get_loaders(
         pin_memory=True,
         )
     
-    test_dl = DataLoader(
-        dataset = test_ds,
-        batch_size = batch_size,
-        shuffle = False, 
-        pin_memory=True,
-        )
+    #test_dl = DataLoader(
+        #dataset = test_ds,
+        #batch_size = batch_size,
+       # shuffle = False, 
+       # pin_memory=True,
+       # )
 
-    return train_dl, validation_dl, test_dl
+    return train_dl, validation_dl #, test_dl
