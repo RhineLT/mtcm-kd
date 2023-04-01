@@ -131,12 +131,12 @@ def validitation_loss(models, loss_functions, lr_shedulars, valid_loader, epoch,
           
             preds = torch.softmax(output, dim=1)
             temp_dice_dict = multiclass_dice_coeff(preds=preds, target=target)
-            dice_dict['mean'] += temp_dice_dict['mean']
-            dice_dict['N-NE'] += temp_dice_dict['N-NE']
-            dice_dict['ED'] += temp_dice_dict['ED']
-            dice_dict['ET'] += temp_dice_dict['ET']
-            dice_dict['whole_tumor'] += temp_dice_dict['whole_tumor']
-            dice_dict['tumor_core'] += temp_dice_dict['tumor_core']
+            dice_dict['mean'] += temp_dice_dict['mean'].detach().cpu().item()
+            dice_dict['N-NE'] += temp_dice_dict['N-NE'].detach().cpu().item()
+            dice_dict['ED'] += temp_dice_dict['ED'].detach().cpu().item()
+            dice_dict['ET'] += temp_dice_dict['ET'].detach().cpu().item()
+            dice_dict['whole_tumor'] += temp_dice_dict['whole_tumor'].detach().cpu().item()
+            dice_dict['tumor_core'] += temp_dice_dict['tumor_core'].detach().cpu().item()
             
         
         #if epoch >= 8:
@@ -172,7 +172,7 @@ def validitation_loss(models, loss_functions, lr_shedulars, valid_loader, epoch,
 
 
 
-def Fit(models, optimizers, loss_functions, lr_schedulars, train_loader, valid_loader, epochs, device, writer, model_name):
+def Fit(models, optimizers, loss_functions, lr_schedulars, train_loader, valid_loader, epochs, device, writer, model_name, fold):
     """
     param: model: model to train
     param: optimizer: optimizer to use
@@ -212,17 +212,17 @@ def Fit(models, optimizers, loss_functions, lr_schedulars, train_loader, valid_l
         
         if valid_loss < best_loss:
             best_loss = valid_loss
-            torch.save(models['student_model'].state_dict(), "mmcm_kd\\saved_models\\best_loss.pth")
+            torch.save(models['student_model'].state_dict(), f"mmcm_kd\\saved_models\\best_loss_{fold}.pth")
         
         if dice_dict['mean'] > best_dice:
             best_dice = dice_dict['mean']
-            torch.save(models['student_model'].state_dict(), "mmcm_kd\\saved_models\\best_dice.pth")
+            torch.save(models['student_model'].state_dict(), f"mmcm_kd\\saved_models\\best__{fold}dice.pth")
             
         
         ## save the model 
-        torch.save(models['student_model'].state_dict(), f"mmcm_kd\\saved_models\\{model_name}\\model_{epoch}.pth")
+        torch.save(models['student_model'].state_dict(), f"mmcm_kd\\saved_models\\{model_name}\\model_{fold}_{epoch}.pth")
         ## dump the dice dict to json file
-        with open(f"mmcm_kd\\saved_models\\{model_name}\\dice_dict_{epoch}.json", "w") as f:
+        with open(f"mmcm_kd\\results\\{model_name}\\dice_dict_{fold}_{epoch}.json", "w") as f:
             json.dump(dice_dict, f)
         
         
