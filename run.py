@@ -151,9 +151,10 @@ def run(config):
                       writer=writer,
                       epochs=EPOCHS,
                       model_name=config["model_name"],
+                      fold=fold_index,
                       )
         
-        save_history(history, config["results_path"] + config["model_name"] , epochs=EPOCHS, fold_index=fold_index)
+        save_history(history, config["results_path"] + config["model_name"] , epochs=EPOCHS, fold_no=fold_index)
         
         ## 
         

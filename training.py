@@ -185,7 +185,7 @@ def validitation_loss(models, loss_functions, lr_shedulars, valid_loader, epoch,
 
 
 
-def Fit(models, optimizers, loss_functions, lr_schedulars, train_loader, valid_loader, epochs, device, writer, model_name):
+def Fit(models, optimizers, loss_functions, lr_schedulars, train_loader, valid_loader, epochs, device, writer, model_name, fold):
     """
     param: model: model to train
     param: optimizer: optimizer to use
@@ -221,17 +221,17 @@ def Fit(models, optimizers, loss_functions, lr_schedulars, train_loader, valid_l
         
         if valid_loss < best_loss:
             best_loss = valid_loss
-            torch.save(models['student_model'].state_dict(),f"saved_models//{model_name}//best_loss.pth")
+            torch.save(models['student_model'].state_dict(),f"saved_models//{model_name}//best_loss_{fold}.pth")
         
         if dice_dict['mean'] > best_dice:
             best_dice = dice_dict['mean']
-            torch.save(models['student_model'].state_dict(), f"saved_models//{model_name}//best_dice.pth")
+            torch.save(models['student_model'].state_dict(), f"saved_models//{model_name}//best_dice_{fold}.pth")
             
         
         ## save the model 
-        torch.save(models['student_model'].state_dict(), f"saved_models//{model_name}//model_{epoch}.pth")
+        torch.save(models['student_model'].state_dict(), f"saved_models//{model_name}//model_{fold}_{epoch}.pth")
         ## dump the dice dict to json file
-        with open(f"results//{model_name}//dice_dict_{epoch}.json", "w") as f:
+        with open(f"results//{model_name}//dice_dict_{fold}_{epoch}.json", "w") as f:
             json.dump(dice_dict, f)
         
         
