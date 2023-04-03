@@ -31,17 +31,17 @@ class ResUNET_channel_attention(nn.Module):
 
         ## decoder blocks
         self.upsample_1 = nn.ConvTranspose3d(filters[3],filters[3], kernel_size=2, stride=2)
-        self.channel_attention_1 = ChannelGate(filters[2]+ filters[3])
+        self.channel_attention_1 = ChannelGate(filters[3]+filters[2])
         self.up_residual_conv_1 = ResNetBlock(filters[3]+filters[2],filters[2], stride=1, padding=1)
         
 
         self.upsample_2 = nn.ConvTranspose3d(filters[2],filters[2], kernel_size=2, stride=2)
-        self.channel_attention_2 = ChannelGate(filters[1]+ filters[2])
+        self.channel_attention_2 = ChannelGate(filters[2]+filters[1])
         self.up_residual_conv_2 = ResNetBlock(filters[2]+filters[1],filters[1], stride=1, padding=1)
         
 
         self.upsample_3 = nn.ConvTranspose3d(filters[1],filters[1], kernel_size=2, stride=2)
-        self.channel_attention_3 = ChannelGate(filters[0]+ filters[1])
+        self.channel_attention_3 = ChannelGate(filters[1]+filters[0])
         self.up_residual_conv_3 = ResNetBlock(filters[1]+filters[0],filters[0], stride=1, padding=1)
         
 
@@ -61,20 +61,20 @@ class ResUNET_channel_attention(nn.Module):
         ## Decoder
         x4 = self.upsample_1(x4)
         x5 = torch.cat([x4, x3], dim=1)
-        attention_output = self.channel_attention_1(x5)
-        x6 = self.up_residual_conv_1(attention_output)
+        x5_attention = self.channel_attention_1(x5)
+        x6 = self.up_residual_conv_1(x5_attention)
         
 
         x6 = self.upsample_2(x6)
         x7 = torch.cat([x6, x2], dim=1)
-        attention_output = self.channel_attention_2(x7)
-        x8 = self.up_residual_conv_2(x7)
+        x7_attention = self.channel_attention_2(x7)
+        x8 = self.up_residual_conv_2(x7_attention)
         
 
         x8 = self.upsample_3(x8)
         x9 = torch.cat([x8, x1], dim=1)
-        attention_output = self.channel_attention_3(x9)
-        x10 = self.up_residual_conv_3(x9)
+        x9_attention = self.channel_attention_3(x9)
+        x10 = self.up_residual_conv_3(x9_attention)
         
 
         output = self.output_layer(x10)
