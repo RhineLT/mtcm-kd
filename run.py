@@ -127,9 +127,9 @@ def run(config):
         teacher_model2 = nn.DataParallel(teacher_model2)
         teacher_model2 = teacher_model2.to(DEVICE)
         
-        sm_optimizer = optim.Adam(student_model.parameters(), lr=LEARNING_RATE, weight_decay=1e-6)  #Ranger(student_model.parameters(), lr=LEARNING_RATE, weight_decay=1e-4)
-        tm_optimizer1 = optim.Adam(teacher_model1.parameters(), lr=LEARNING_RATE, weight_decay=1e-6)   #Ranger(teacher_model.parameters(), lr=LEARNING_RATE)
-        tm_optimizer2 = optim.Adam(teacher_model2.parameters(), lr=LEARNING_RATE, weight_decay=1e-6)   #Ranger(teacher_model.parameters(), lr=LEARNING_RATE)
+        sm_optimizer = optim.Adam(student_model.parameters(), lr=LEARNING_RATE)  #Ranger(student_model.parameters(), lr=LEARNING_RATE, weight_decay=1e-4)
+        tm_optimizer1 = optim.Adam(teacher_model1.parameters(), lr=LEARNING_RATE)   #Ranger(teacher_model.parameters(), lr=LEARNING_RATE)
+        tm_optimizer2 = optim.Adam(teacher_model2.parameters(), lr=LEARNING_RATE)   #Ranger(teacher_model.parameters(), lr=LEARNING_RATE)
         
         ### learning schedulars 
         lr_scheduler_one_cycle = OneCycleLR(sm_optimizer, max_lr=LEARNING_RATE, steps_per_epoch=len(train_dl), epochs=EPOCHS)
