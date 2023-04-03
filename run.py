@@ -123,7 +123,7 @@ def run(config):
         #teacher_model = nn.DataParallel(teacher_model)
         #teacher_model = teacher_model.to(DEVICE)
         
-        sm_optimizer = optim.Adam(student_model.parameters(), lr=LEARNING_RATE, weight_decay=1e-6)  #Ranger(student_model.parameters(), lr=LEARNING_RATE, weight_decay=1e-4)
+        sm_optimizer = optim.Adam(student_model.parameters(), lr=LEARNING_RATE)  #Ranger(student_model.parameters(), lr=LEARNING_RATE, weight_decay=1e-4)
        # tm_optimizer = optim.Adam(teacher_model.parameters(), lr=LEARNING_RATE, weight_decay=1e-6)   #Ranger(teacher_model.parameters(), lr=LEARNING_RATE)
         
         
