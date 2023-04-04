@@ -30,17 +30,19 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
     models['student_model'].train()
     
     for idx, (data, target) in enumerate(train_loader):
-        data = data.to(device)
-        target = target.to(device)
+        data = data.to(device[0])
+        target = target.to(device[0])
         
         output = models['student_model']((data )[:, 1, ...].unsqueeze(1))
         teacher_output1 = models["teacher_model1"](data[:, 0, ...].unsqueeze(1))
         teacher_output2 = models["teacher_model2"](data[:, 2, ...].unsqueeze(1))
+        teacher_output3 = models["teacher_model3"](data[:, 3, ...].unsqueeze(1))
         
         
         ### teacher models loss calculation and backward pass
-        teacher_loss1 = loss_functions['dice_loss'](target, teacher_output1)
-        teacher_loss2 = loss_functions['dice_loss'](target, teacher_output2)
+        teacher_loss1 = loss_functions['combination_loss'](target, teacher_output1.to(device[0]))
+        teacher_loss2 = loss_functions['combination_loss'](target, teacher_output2.to(device[0]))
+        teacher_loss3 = loss_functions['combination_loss'](target, teacher_output3.to(device[0]))
         
         
         optimizers['teacher_optimizer1'].zero_grad()
@@ -51,20 +53,35 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
         teacher_loss2.backward()
         optimizers['teacher_optimizer2'].step()
         
+        optimizers['teacher_optimizer3'].zero_grad()
+        teacher_loss3.backward()
+        optimizers['teacher_optimizer3'].step()
+        
+        
         
         
         ## KL divergence loss calculation and backward pass for student model
-        if idx % 50 == 0:
+        if idx % 25 == 0:
+            t1 = teacher_output1.to(device[0]).detach().clone().requires_grad_(True)
+            t2 = teacher_output2.to(device[0]).detach().clone().requires_grad_(True)
+            t3 = teacher_output3.to(device[0]).detach().clone().requires_grad_(True)
+            
+            ## del from the torch ram
+            del teacher_output1, teacher_output2, teacher_output3
+            
+            T = 20
 
-            kl_divergence_loss_1 = torch.nn.KLDivLoss(reduction='batchmean')(torch.log_softmax(output, dim=1), torch.softmax(teacher_output1.detach(), dim=1))
-            kl_divergence_loss_2 = torch.nn.KLDivLoss(reduction='batchmean')(torch.log_softmax(output, dim=1), torch.softmax(teacher_output2.detach(), dim=1))
+            kl_divergence_loss_1 = torch.nn.KLDivLoss(reduction='batchmean')(torch.log_softmax(output/ T, dim=1), torch.softmax(t1/ T, dim=1))
+            kl_divergence_loss_2 = torch.nn.KLDivLoss(reduction='batchmean')(torch.log_softmax(output/ T, dim=1), torch.softmax(t2/ T, dim=1))
+            kl_divergence_loss_3 = torch.nn.KLDivLoss(reduction='batchmean')(torch.log_softmax(output/ T, dim=1), torch.softmax(t3/ T, dim=1))
             KL_Loss = True
+            
         else: 
             KL_Loss = False
             
         #loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
-        loss = (loss_functions['combination_loss'](target, output) + 0.01 * kl_divergence_loss_1 + 0.01 * 
-                kl_divergence_loss_2) if KL_Loss else loss_functions['combination_loss'](target, output)
+        loss = (loss_functions['combination_loss'](target, output) + 0.05 * kl_divergence_loss_1 + 0.05 * 
+                kl_divergence_loss_2 + 0.05 * kl_divergence_loss_3) if KL_Loss else loss_functions['combination_loss'](target, output)
         
         
         # zero the parameter gradients
@@ -131,8 +148,8 @@ def validitation_loss(models, loss_functions, lr_shedulars, valid_loader, epoch,
     
     with torch.no_grad():
         for idx, (data, target) in enumerate(valid_loader):
-            data = data.to(device)
-            target = target.to(device)
+            data = data.to(device[0])
+            target = target.to(device[0])
             
             output = models['student_model']((data)[:, 1, ...].unsqueeze(1))
             
