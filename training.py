@@ -1,7 +1,16 @@
 import torch
+import torch.nn as nn
 
 from metrics import calculate_dice_score, calculate_hd95_multi_class, multiclass_dice_coeff
 import json
+
+
+
+# Define the KL divergence loss with temperature
+def kd_loss(outputs, teacher_outputs, T):
+    soft_outputs = nn.functional.softmax(outputs / T, dim=1)
+    soft_teacher_outputs = nn.functional.softmax(teacher_outputs / T, dim=1)
+    return nn.KLDivLoss(reduction='batchmean')(soft_outputs.log(), soft_teacher_outputs.detach())
 
 
 def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_loader, epoch, device, writer):
@@ -61,27 +70,23 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
         
         
         ## KL divergence loss calculation and backward pass for student model
-        if idx % 25 == 0:
-            t1 = teacher_output1.to(device[0]).detach().clone().requires_grad_(True)
-            t2 = teacher_output2.to(device[0]).detach().clone().requires_grad_(True)
-            t3 = teacher_output3.to(device[0]).detach().clone().requires_grad_(True)
-            
-            ## del from the torch ram
-            del teacher_output1, teacher_output2, teacher_output3
-            
+        if idx % 1 == 0 and epoch > 0:
             T = 20
+            kl_divergence_loss_1 = kd_loss(output, teacher_output1.to(device[0]), T)
+            kl_divergence_loss_2 = kd_loss(output, teacher_output2.to(device[0]), T)
+            kl_divergence_loss_3 = kd_loss(output, teacher_output3.to(device[0]), T)
 
-            kl_divergence_loss_1 = torch.nn.KLDivLoss(reduction='batchmean')(torch.log_softmax(output/ T, dim=1), torch.softmax(t1/ T, dim=1))
-            kl_divergence_loss_2 = torch.nn.KLDivLoss(reduction='batchmean')(torch.log_softmax(output/ T, dim=1), torch.softmax(t2/ T, dim=1))
-            kl_divergence_loss_3 = torch.nn.KLDivLoss(reduction='batchmean')(torch.log_softmax(output/ T, dim=1), torch.softmax(t3/ T, dim=1))
+            #kl_divergence_loss_1 = torch.nn.KLDivLoss(reduction='batchmean')(torch.log_softmax(output/ T, dim=1), torch.softmax(t1/ T, dim=1))
+            #kl_divergence_loss_2 = torch.nn.KLDivLoss(reduction='batchmean')(torch.log_softmax(output/ T, dim=1), torch.softmax(t2/ T, dim=1))
+            #kl_divergence_loss_3 = torch.nn.KLDivLoss(reduction='batchmean')(torch.log_softmax(output/ T, dim=1), torch.softmax(t3/ T, dim=1))
             KL_Loss = True
             
         else: 
             KL_Loss = False
             
         #loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
-        loss = (loss_functions['combination_loss'](target, output) + 0.05 * kl_divergence_loss_1 + 0.05 * 
-                kl_divergence_loss_2 + 0.05 * kl_divergence_loss_3) if KL_Loss else loss_functions['combination_loss'](target, output)
+        loss = (loss_functions['combination_loss'](target, output) + 0.01 * kl_divergence_loss_1 + 0.01 * 
+                kl_divergence_loss_2 + 0.01 * kl_divergence_loss_3) if KL_Loss else loss_functions['combination_loss'](target, output)
         
         
         # zero the parameter gradients
