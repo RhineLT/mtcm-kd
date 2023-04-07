@@ -38,7 +38,9 @@ def calculate_wt_dice_for_teacher_models(t1_preds, t2_preds, t3_preds, target, d
     preds = torch.softmax(t3_preds, dim=1)
     t3_dice_dict = multiclass_dice_coeff(preds=preds, target=target)
     
-    return t1_dice_dict['whole_tumor'], t2_dice_dict['whole_tumor'], t3_dice_dict['whole_tumor']
+    wt_dice_scores = [t1_dice_dict['whole_tumor'], t2_dice_dict['whole_tumor'], t3_dice_dict['whole_tumor']]
+    
+    return wt_dice_scores
 
 
 def performance_base_weight_calculation(t1_wt_score, t2_wt_score, t3_wt_score, total_weight=0.10):
@@ -111,7 +113,10 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
         teacher_loss3 = loss_functions['combination_loss'](target, teacher_output3.to(device[0]))
         
         ### calculating wt dice score for each teacher model
-        t1_wt_score, t2_wt_score, t3_wt_score += calculate_wt_dice_for_teacher_models(teacher_output1, teacher_output2, teacher_output3, target, device[0])
+        temp_list = calculate_wt_dice_for_teacher_models(teacher_output1, teacher_output2, teacher_output3, target, device[0])
+        t1_wt_score += temp_list[0]
+        t2_wt_score += temp_list[1]
+        t3_wt_score += temp_list[2]
         
         optimizers['teacher_optimizer1'].zero_grad()
         teacher_loss1.backward()
