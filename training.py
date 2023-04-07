@@ -13,7 +13,57 @@ def kd_loss(outputs, teacher_outputs, T):
     return nn.KLDivLoss(reduction='batchmean')(soft_outputs.log(), soft_teacher_outputs.detach())
 
 
-def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_loader, epoch, device, writer):
+def calculate_wt_dice_for_teacher_models(t1_preds, t2_preds, t3_preds, target, device):
+    """
+    param: t1_preds: predictions of teacher model 1
+    param: t2_preds: predictions of teacher model 2
+    param: t3_preds: predictions of teacher model 3
+    param: target: target
+    param: device: device to use
+    
+    return: weights: weights for teacher loss
+    
+    Description: calculate weights for teacher loss
+    """
+    t1_preds = t1_preds.to(device).detach()
+    t2_preds = t2_preds.to(device).detach()
+    t3_preds = t3_preds.to(device).detach()
+    
+    preds = torch.softmax(t1_preds, dim=1)
+    t1_dice_dict = multiclass_dice_coeff(preds=preds, target=target)
+    
+    preds = torch.softmax(t2_preds, dim=1)
+    t2_dice_dict = multiclass_dice_coeff(preds=preds, target=target)
+    
+    preds = torch.softmax(t3_preds, dim=1)
+    t3_dice_dict = multiclass_dice_coeff(preds=preds, target=target)
+    
+    return t1_dice_dict['whole_tumor'], t2_dice_dict['whole_tumor'], t3_dice_dict['whole_tumor']
+
+
+def performance_base_weight_calculation(t1_wt_score, t2_wt_score, t3_wt_score, total_weight=0.10):
+    """
+    param: t1_wt_score: whole tumor dice score of teacher model 1
+    param: t2_wt_score: whole tumor dice score of teacher model 2
+    param: t3_wt_score: whole tumor dice score of teacher model 3
+    
+    return: weights: weights for teacher loss
+    
+    Description: calculate performance-based weights for teacher model losses
+    """
+    weights = [t1_wt_score, t2_wt_score, t3_wt_score]
+    weights = [i / sum(weights) for i in weights]
+    
+    weights = [i * total_weight for i in weights]
+    
+    print("T1 weight: ", weights[0])
+    print("T2 weight: ", weights[1])
+    print("T3 weight: ", weights[2])
+    
+    return weights
+
+
+def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_loader, weights, epoch, device, writer):
     
     
     """
@@ -35,8 +85,15 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
     """
     KL_Loss = False
     
+    t1_wt_score = 0
+    t2_wt_score = 0
+    t3_wt_score = 0
+    
     mean_loss = 0
     models['student_model'].train()
+    models['teacher_model1'].train()
+    models['teacher_model2'].train()
+    models['teacher_model3'].train()
     
     for idx, (data, target) in enumerate(train_loader):
         data = data.to(device[0])
@@ -53,6 +110,8 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
         teacher_loss2 = loss_functions['combination_loss'](target, teacher_output2.to(device[0]))
         teacher_loss3 = loss_functions['combination_loss'](target, teacher_output3.to(device[0]))
         
+        ### calculating wt dice score for each teacher model
+        t1_wt_score, t2_wt_score, t3_wt_score += calculate_wt_dice_for_teacher_models(teacher_output1, teacher_output2, teacher_output3, target, device[0])
         
         optimizers['teacher_optimizer1'].zero_grad()
         teacher_loss1.backward()
@@ -75,18 +134,14 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
             kl_divergence_loss_1 = kd_loss(output, teacher_output1.to(device[0]), T)
             kl_divergence_loss_2 = kd_loss(output, teacher_output2.to(device[0]), T)
             kl_divergence_loss_3 = kd_loss(output, teacher_output3.to(device[0]), T)
-
-            #kl_divergence_loss_1 = torch.nn.KLDivLoss(reduction='batchmean')(torch.log_softmax(output/ T, dim=1), torch.softmax(t1/ T, dim=1))
-            #kl_divergence_loss_2 = torch.nn.KLDivLoss(reduction='batchmean')(torch.log_softmax(output/ T, dim=1), torch.softmax(t2/ T, dim=1))
-            #kl_divergence_loss_3 = torch.nn.KLDivLoss(reduction='batchmean')(torch.log_softmax(output/ T, dim=1), torch.softmax(t3/ T, dim=1))
             KL_Loss = True
             
         else: 
             KL_Loss = False
             
         #loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
-        loss = (loss_functions['combination_loss'](target, output) + 0.01 * kl_divergence_loss_1 + 0.01 * 
-                kl_divergence_loss_2 + 0.01 * kl_divergence_loss_3) if KL_Loss else loss_functions['combination_loss'](target, output)
+        loss = (loss_functions['combination_loss'](target, output) + weights[0] * kl_divergence_loss_1 + weights[1] *  
+                kl_divergence_loss_2 + weights[2] * kl_divergence_loss_3) if KL_Loss else loss_functions['combination_loss'](target, output)
         
         
         # zero the parameter gradients
@@ -118,9 +173,18 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
         #lr_shedulars['one_cycle'].step()
         #print(f"Learning rate: {lr_shedulars['one_cycle'].get_lr()}")
         
+    t1_wt_score /= len(train_loader)
+    t2_wt_score /= len(train_loader)
+    t3_wt_score /= len(train_loader)
+    
+    weights = performance_base_weight_calculation(t1_wt_score, t2_wt_score, t3_wt_score)
+    
+    print(f"t1_wt_score: {t1_wt_score}")
+    print(f"t2_wt_score: {t2_wt_score}")
+    print(f"t3_wt_score: {t3_wt_score}")
     
     print("===========================================")
-    return mean_loss / len(train_loader)
+    return mean_loss / len(train_loader), weights
 
 
 def validitation_loss(models, loss_functions, lr_shedulars, valid_loader, epoch, device, writer):
@@ -174,11 +238,11 @@ def validitation_loss(models, loss_functions, lr_shedulars, valid_loader, epoch,
             dice_dict['tumor_core'] += temp_dice_dict['tumor_core'].detach().cpu().item()
             
         
-        #if epoch >= 8:
+        if epoch >= 8:
             ## update learning rate
-            #print("Previous learning rate: ", lr_shedulars['plateau'].optimizer.param_groups[0]['lr'])
-           # lr_shedulars['plateau'].step(mean_loss / len(valid_loader))
-           # print("Learning rate: ", lr_shedulars['plateau'].optimizer.param_groups[0]['lr'])
+            print("Previous learning rate: ", lr_shedulars['plateau'].optimizer.param_groups[0]['lr'])
+            lr_shedulars['plateau'].step(mean_loss / len(valid_loader))
+            print("Learning rate: ", lr_shedulars['plateau'].optimizer.param_groups[0]['lr'])
         
         
         dice_dict['mean'] /= len(valid_loader)
@@ -234,11 +298,11 @@ def Fit(models, optimizers, loss_functions, lr_schedulars, train_loader, valid_l
     
     
     ### patience for early stopping
-    patience = 5
-    
+    patience = 8
+    weights = [0.1, 0.1, 0.1]
     
     for epoch in range(epochs):
-        train_loss = train_one_epoch(models, optimizers, loss_functions, lr_schedulars, train_loader, epoch, device, writer)
+        train_loss, weights = train_one_epoch(models, optimizers, loss_functions, lr_schedulars, train_loader,weights, epoch, device, writer)
         valid_loss, dice_dict = validitation_loss(models, loss_functions,lr_schedulars, valid_loader, epoch, device, writer,)
         
         if valid_loss < best_loss:
