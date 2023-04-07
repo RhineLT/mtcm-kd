@@ -95,7 +95,7 @@ def run(config):
     combination_loss_fn = combination_loss
     
     
-    for fold_index in range(5):
+    for fold_index in range(1):
         
          ## get the data loaders
         train_dl, validation_dl = get_loaders(

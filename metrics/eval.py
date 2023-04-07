@@ -35,9 +35,6 @@ def dice_coeff(input: Tensor, target: Tensor, reduce_batch_first: bool = False, 
 def multiclass_dice_coeff(preds: Tensor, target: Tensor, reduce_batch_first: bool = False, epsilon=1e-6):
     # Average of Dice coefficient for all classes
     
-    zero_tensor = torch.tensor([0], device="cuda:0").float()
-    one_tensor = torch.tensor([1], device="cuda:0").float()
-    
 
     target = F.one_hot(target, 4).permute(0,4,1,2,3).float()
     input = F.one_hot(preds.argmax(1), 4).permute(0,4,1,2,3).float()
@@ -53,8 +50,8 @@ def multiclass_dice_coeff(preds: Tensor, target: Tensor, reduce_batch_first: boo
 
 
     # Tumor core target and preds, such that if the last two classes are present, then it is considered as tumor core
-    tumor_core_target = (torch.any(target[:, 1:], dim=1, keepdim=True)).float()
-    tumor_core_preds = ((preds.argmax(dim=1) == 2) | (preds.argmax(dim=1) == 3)).float().unsqueeze(1)
+    tumor_core_target = (torch.any(target[:, 0:1] + target[:, 2:], dim=1, keepdim=True)).float()
+    tumor_core_preds = ((preds.argmax(dim=1) == 1) | (preds.argmax(dim=1) == 3)).float().unsqueeze(1)
 
     
 
