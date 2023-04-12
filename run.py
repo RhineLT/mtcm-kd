@@ -112,7 +112,7 @@ def run(config):
         
 
         ## model configuration
-        writer = SummaryWriter(log_dir=config["writer_path"] + config["model_name"] + f"\\fold_{fold_index}")
+        writer = SummaryWriter(log_dir=config["writer_path"] + "//" + config["model_name"] + "//" + f"\\fold_{fold_index}")
         
         student_model = ResUNET_channel_attention(in_channels=config["model_params"]["in_channels"], out_channels=config["model_params"]["out_channels"],)
         student_model = nn.DataParallel(student_model)
@@ -150,7 +150,7 @@ def run(config):
                       fold=fold_index,
                       )
         
-        save_history(history, config["results_path"] + config["model_name"] , epochs=EPOCHS, fold_no=fold_index)
+        save_history(history, config["results_path"] + "/" + config["model_name"] , epochs=EPOCHS, fold_no=fold_index)
         
         ## 
         
@@ -158,6 +158,6 @@ def run(config):
 
 if __name__ == "__main__":
     ## load config file
-    config = json.load(open("mmcm_kd//config.json"))
+    config = json.load(open("config.json"))
     #run the model   
     run(config=config)
