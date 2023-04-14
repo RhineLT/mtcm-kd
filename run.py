@@ -82,10 +82,10 @@ def run(config):
         dict_to_json = json.dumps(data_split)
         
         ## save the json file
-        with open(config["data_split_path"] + "folds_data.json", "w") as file:
+        with open(config["data_split_path"] + "//folds_data.json", "w") as file:
             file.write(dict_to_json)
     else:
-        with open(config["data_split_path"] + "folds_data.json", "r") as file:
+        with open(config["data_split_path"] + "//folds_data.json", "r") as file:
             data_split = json.load(file)
             
 
