@@ -10,7 +10,7 @@ import json
 def kd_loss(outputs, teacher_outputs, T):
     soft_outputs = nn.functional.softmax(outputs / T, dim=1)
     soft_teacher_outputs = nn.functional.softmax(teacher_outputs / T, dim=1)
-    return nn.KLDivLoss(reduction='batchmean')(soft_outputs.log(), soft_teacher_outputs.detach())
+    return T * nn.KLDivLoss(reduction='batchmean')(soft_outputs.log(), soft_teacher_outputs.detach())
 
 
 def calculate_wt_dice_for_teacher_models(t1_preds, t2_preds, t3_preds, target, device):
@@ -303,7 +303,7 @@ def Fit(models, optimizers, loss_functions, lr_schedulars, train_loader, valid_l
     
     
     ### patience for early stopping
-    patience = 8
+    patience = 20 #8
     weights = [0.1, 0.1, 0.1]
     
     for epoch in range(epochs):

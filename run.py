@@ -96,7 +96,7 @@ def run(config):
     KL_divergence_fn = KL_divergence
     
     
-    for fold_index in range(5):
+    for fold_index in range(4, 5):
         
          ## get the data loaders
         train_dl, validation_dl = get_loaders(
