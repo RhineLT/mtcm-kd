@@ -12,6 +12,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau, OneCycleLR
 
 from training import  Fit
 from models import ResUNET_channel_attention
+from models.cooperative_learning import Cooperative_Learning_Module
 from loss_functions import dice_loss, jaccard_loss, CrossEntropyLoss, KL_divergence, combination_loss
 from optimizer import Ranger
 from dataset import  get_loaders, spliting_data_5_folds, reshape_for_deep_supervision, reshape_3d
@@ -134,19 +135,28 @@ def run(config):
         teacher_model3 = nn.DataParallel(teacher_model3, device_ids=[1])
         teacher_model3 = teacher_model3.to(devices[1])
         
+        Cooperative_learning1 = Cooperative_Learning_Module(in_channels=64, out_channels=4)
+        Cooperative_learning1 = nn.DataParallel(Cooperative_learning1, device_ids=[1])
+        Cooperative_learning1 = Cooperative_learning1.to(devices[1])
         
-        sm_optimizer = optim.Adam(student_model.parameters(), lr=LEARNING_RATE)  
+        sm_optimizer = optim.Adam(student_model.parameters(), lr=LEARNING_RATE) 
         tm_optimizer1 = optim.Adam(teacher_model1.parameters(), lr=LEARNING_RATE)   
         tm_optimizer2 = optim.Adam(teacher_model2.parameters(), lr=LEARNING_RATE)   
         tm_optimizer3 = optim.Adam(teacher_model3.parameters(), lr=LEARNING_RATE)
-        
+        cooperative_optimizer = optim.Adam(Cooperative_learning1.parameters(), lr=LEARNING_RATE)
+        generalized_optimizer = optim.Adam(list(teacher_model1.parameters()) +
+                                           list(teacher_model2.parameters()) + list(teacher_model3.parameters()) + 
+                                           list(Cooperative_learning1.parameters()), lr=LEARNING_RATE)
+       
         ### learning schedulars 
         lr_scheduler_one_cycle = OneCycleLR(sm_optimizer, max_lr=LEARNING_RATE, steps_per_epoch=len(train_dl), epochs=EPOCHS)
         lr_scheduler_plateau = ReduceLROnPlateau(sm_optimizer, mode="min", factor=0.1, patience=5, verbose=True)
         
         
-        models = {"student_model": student_model, "teacher_model1": teacher_model1, "teacher_model2": teacher_model2, "teacher_model3": teacher_model3}
-        optimizers = {"student_optimizer": sm_optimizer, "teacher_optimizer1": tm_optimizer1, "teacher_optimizer2": tm_optimizer2, "teacher_optimizer3": tm_optimizer3}
+        models = {"student_model": student_model, "teacher_model1": teacher_model1, "teacher_model2": teacher_model2, "teacher_model3": teacher_model3,
+                  "Cooperative_learning1": Cooperative_learning1 }
+        optimizers = {"student_optimizer": sm_optimizer, "teacher_optimizer1": tm_optimizer1, "teacher_optimizer2": tm_optimizer2, 
+                      "teacher_optimizer3": tm_optimizer3, "cooperative_optimizer": cooperative_optimizer, "generalized_optimizer": generalized_optimizer}
         loss_functions = {"dice_loss": dice_loss_fn, "jaccard_loss": jaccard_loss_fn, "cross_entropy_loss": CrossEntropyLoss_fn, "combination_loss": combination_loss_fn,
                           "kl_div_loss": KL_divergence_fn}
         lr_schedulars = {"one_cycle": lr_scheduler_one_cycle, "plateau": lr_scheduler_plateau}

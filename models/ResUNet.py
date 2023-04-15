@@ -47,6 +47,10 @@ class ResUNET_channel_attention(nn.Module):
 
         ## output layer
         self.output_layer = nn.Conv3d(filters[0], out_channels, kernel_size=1, stride=1,)
+        
+        ## output for deep supervision
+       # self.output_layer_1 = nn.Conv3d(filters[1], out_channels, kernel_size=1, stride=1,)
+        #self.output_layer_2 = nn.Conv3d(filters[2], out_channels, kernel_size=1, stride=1,)
 
     def forward(self, x, deep_supervision=False):
         
@@ -59,27 +63,32 @@ class ResUNET_channel_attention(nn.Module):
         x4 = self.bridge(x3)
 
         ## Decoder
-        x4 = self.upsample_1(x4)
-        x5 = torch.cat([x4, x3], dim=1)
+        x4_up = self.upsample_1(x4)
+        x5 = torch.cat([x4_up, x3], dim=1)
         x5_attention = self.channel_attention_1(x5)
         x6 = self.up_residual_conv_1(x5_attention)
         
 
-        x6 = self.upsample_2(x6)
-        x7 = torch.cat([x6, x2], dim=1)
+        x6_up = self.upsample_2(x6)
+        x7 = torch.cat([x6_up, x2], dim=1)
         x7_attention = self.channel_attention_2(x7)
         x8 = self.up_residual_conv_2(x7_attention)
         
 
-        x8 = self.upsample_3(x8)
-        x9 = torch.cat([x8, x1], dim=1)
+        x8_up = self.upsample_3(x8)
+        x9 = torch.cat([x8_up, x1], dim=1)
         x9_attention = self.channel_attention_3(x9)
         x10 = self.up_residual_conv_3(x9_attention)
         
 
         output = self.output_layer(x10)
+        
+        #if deep_supervision:
+           # output_1 = self.output_layer_1(x6)
+           # output_2 = self.output_layer_2(x8)
+           # return [output, output_1, output_2]
 
-        return output if not deep_supervision else [output, x10, x8, x6]
+        return output if not deep_supervision else [output, x8, x6]
 
 
 

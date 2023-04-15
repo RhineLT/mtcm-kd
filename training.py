@@ -4,6 +4,7 @@ import torch.nn as nn
 from metrics import calculate_dice_score, calculate_hd95_multi_class, multiclass_dice_coeff
 import json
 
+from dataset import reshape_3d
 
 
 # Define the KL divergence loss with temperature
@@ -101,10 +102,20 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
         data = data.to(device[0])
         target = target.to(device[0])
         
-        output = models['student_model']((data )[:, 1, ...].unsqueeze(1))
-        teacher_output1 = models["teacher_model1"](data[:, 0, ...].unsqueeze(1))
-        teacher_output2 = models["teacher_model2"](data[:, 2, ...].unsqueeze(1))
-        teacher_output3 = models["teacher_model3"](data[:, 3, ...].unsqueeze(1))
+        
+        
+        output, level_1_student, _ = models['student_model']((data )[:, 1, ...].unsqueeze(1), deep_supervision=True)
+        teacher_output1, level_1_t1, _ = models["teacher_model1"](data[:, 0, ...].unsqueeze(1), deep_supervision=True)
+        teacher_output2, level_1_t2, _ = models["teacher_model2"](data[:, 2, ...].unsqueeze(1), deep_supervision=True)
+        teacher_output3, level_1_t3, _ = models["teacher_model3"](data[:, 3, ...].unsqueeze(1), deep_supervision=True)
+        
+        ## cooperative learning
+        cooperative_output = models['Cooperative_learning1'](level_1_t1, level_1_t2, level_1_t3)
+        reshape = reshape_3d(64, 64, 64)
+        ## change the data type of the target to float
+        reshape_target = reshape(target.clone().float()).long()
+        cooperative_loss = loss_functions['combination_loss'](reshape_target, cooperative_output.to(device[0]))
+        
         
         
         ### teacher models loss calculation and backward pass
@@ -118,17 +129,28 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
         t2_wt_score += temp_list[1]
         t3_wt_score += temp_list[2]
         
-        optimizers['teacher_optimizer1'].zero_grad()
-        teacher_loss1.backward()
-        optimizers['teacher_optimizer1'].step()
+        total_teacher_loss_cooperative = teacher_loss1 + teacher_loss2 + teacher_loss3 + 0.10* cooperative_loss
         
-        optimizers['teacher_optimizer2'].zero_grad()
-        teacher_loss2.backward()
-        optimizers['teacher_optimizer2'].step()
+        optimizers['generalized_optimizer'].zero_grad()
+        total_teacher_loss_cooperative.backward()
+        optimizers['generalized_optimizer'].step()
         
-        optimizers['teacher_optimizer3'].zero_grad()
-        teacher_loss3.backward()
-        optimizers['teacher_optimizer3'].step()
+        #optimizers['teacher_optimizer1'].zero_grad()
+        #teacher_loss1.backward()
+        #optimizers['teacher_optimizer1'].step()
+        
+        #optimizers['teacher_optimizer2'].zero_grad()
+        #teacher_loss2.backward()
+        #optimizers['teacher_optimizer2'].step()
+        
+        #optimizers['teacher_optimizer3'].zero_grad()
+        #teacher_loss3.backward()
+        #optimizers['teacher_optimizer3'].step()
+        
+        
+        #optimizers['cooperative_optimizer'].zero_grad()
+        #cooperative_loss.backward()
+        #optimizers['cooperative_optimizer'].step()
         
         
         
@@ -139,14 +161,18 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
             kl_divergence_loss_1 = kd_loss(output, teacher_output1.to(device[0]), T)
             kl_divergence_loss_2 = kd_loss(output, teacher_output2.to(device[0]), T)
             kl_divergence_loss_3 = kd_loss(output, teacher_output3.to(device[0]), T)
+            deep_supervison_KL_loss = kd_loss(level_1_student, cooperative_output.to(device[0]), T)
             KL_Loss = True
             
         else: 
             KL_Loss = False
             
+        ## deep supervision loss 
+        deep_supervision_loss = loss_functions['combination_loss'](reshape_target.to(device[0]), level_1_student.to(device[0]))
+        
         #loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
         loss = (loss_functions['combination_loss'](target, output) + weights[0] * kl_divergence_loss_1 + weights[1] *  
-                kl_divergence_loss_2 + weights[2] * kl_divergence_loss_3) if KL_Loss else loss_functions['combination_loss'](target, output)
+                kl_divergence_loss_2 + weights[2] * kl_divergence_loss_3 + 0.10 *(deep_supervision_loss + deep_supervison_KL_loss)) if KL_Loss else loss_functions['combination_loss'](target, output)
         
         
         # zero the parameter gradients
