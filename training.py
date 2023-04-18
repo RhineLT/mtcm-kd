@@ -104,7 +104,7 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
         
         
         
-        output, level_1_student, _ = models['student_model']((data )[:, 1, ...].unsqueeze(1), deep_supervision=True)
+        output, level_1_student, _ = models['student_model']((data )[:, 1, ...].unsqueeze(1), deep_supervision=True, student=True)
         teacher_output1, level_1_t1, _ = models["teacher_model1"](data[:, 0, ...].unsqueeze(1), deep_supervision=True)
         teacher_output2, level_1_t2, _ = models["teacher_model2"](data[:, 2, ...].unsqueeze(1), deep_supervision=True)
         teacher_output3, level_1_t3, _ = models["teacher_model3"](data[:, 3, ...].unsqueeze(1), deep_supervision=True)
@@ -171,8 +171,8 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
         deep_supervision_loss = loss_functions['combination_loss'](reshape_target.to(device[0]), level_1_student.to(device[0]))
         
         #loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
-        loss = (loss_functions['combination_loss'](target, output) + weights[0] * kl_divergence_loss_1 + weights[1] *  
-                kl_divergence_loss_2 + weights[2] * kl_divergence_loss_3 + 0.10 *(deep_supervision_loss + deep_supervison_KL_loss)) if KL_Loss else loss_functions['combination_loss'](target, output)
+        loss = (0.75*loss_functions['combination_loss'](target, output) + weights[0] * kl_divergence_loss_1 + weights[1] *  
+                kl_divergence_loss_2 + weights[2] * kl_divergence_loss_3 + 0.10 *(0.7*deep_supervision_loss + 0.3* deep_supervison_KL_loss)) if KL_Loss else loss_functions['combination_loss'](target, output)
         
         
         # zero the parameter gradients
@@ -208,7 +208,7 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
     t2_wt_score /= len(train_loader)
     t3_wt_score /= len(train_loader)
     
-    weights = performance_base_weight_calculation(t1_wt_score, t2_wt_score, t3_wt_score)
+    weights = performance_base_weight_calculation(t1_wt_score, t2_wt_score, t3_wt_score, total_weight=0.15)
     
     print(f"t1_wt_score: {t1_wt_score}")
     print(f"t2_wt_score: {t2_wt_score}")
@@ -269,7 +269,7 @@ def validitation_loss(models, loss_functions, lr_shedulars, valid_loader, epoch,
             dice_dict['tumor_core'] += temp_dice_dict['tumor_core'].detach().cpu().item()
             
         
-        if epoch >= 8:
+        if epoch >= 4:
             ## update learning rate
             print("Previous learning rate: ", lr_shedulars['plateau'].optimizer.param_groups[0]['lr'])
             lr_shedulars['plateau'].step(mean_loss / len(valid_loader))

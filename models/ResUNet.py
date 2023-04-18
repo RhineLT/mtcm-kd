@@ -49,10 +49,10 @@ class ResUNET_channel_attention(nn.Module):
         self.output_layer = nn.Conv3d(filters[0], out_channels, kernel_size=1, stride=1,)
         
         ## output for deep supervision
-       # self.output_layer_1 = nn.Conv3d(filters[1], out_channels, kernel_size=1, stride=1,)
-        #self.output_layer_2 = nn.Conv3d(filters[2], out_channels, kernel_size=1, stride=1,)
+        self.output_layer_1 = nn.Conv3d(filters[1], out_channels, kernel_size=1, stride=1,)
+        self.output_layer_2 = nn.Conv3d(filters[2], out_channels, kernel_size=1, stride=1,)
 
-    def forward(self, x, deep_supervision=False):
+    def forward(self, x, deep_supervision=False, student=False):
         
         ## Encoder 
         x1 = self.input_layer(x) + self.input_skip(x)
@@ -83,10 +83,10 @@ class ResUNET_channel_attention(nn.Module):
 
         output = self.output_layer(x10)
         
-        #if deep_supervision:
-           # output_1 = self.output_layer_1(x6)
-           # output_2 = self.output_layer_2(x8)
-           # return [output, output_1, output_2]
+        if deep_supervision and student:
+            output_1 = self.output_layer_1(x8)
+            output_2 = self.output_layer_2(x6)
+            return [output, output_1, output_2]
 
         return output if not deep_supervision else [output, x8, x6]
 
