@@ -22,13 +22,13 @@ class BraTS_Dataset(Dataset):
         voxels = []
         img_id = self.samples[index]
 
-        for nii in [f'{self.dataset_dir}/{img_id}/{img_id}_{s_type}.nii.gz' for s_type in ["flair", "t1ce", "t2", "seg"]]: #"t1"
+        for nii in [f'{self.dataset_dir}/{img_id}/{img_id}_{s_type}.nii.gz' for s_type in ["flair", "t1ce", "t2", "t1", "seg"]]:
     
             image= nib.load(nii,).get_fdata()
             voxels.append(image)
         
         ## converting the data to numpy arrays
-        volume = np.array(voxels[0:3])
+        volume = np.array(voxels[0:4])
         volume_mask = np.array(voxels[-1])
 
         ## converting the data to tensors
