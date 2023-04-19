@@ -87,6 +87,7 @@ def run(config):
             file.write(dict_to_json)
     else:
         with open(os.path.join(config["data_split_path"], "folds_data.json"), "r") as file:
+            data_split = json.load(file)
 
         
             
