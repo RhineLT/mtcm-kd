@@ -82,11 +82,12 @@ def run(config):
         dict_to_json = json.dumps(data_split)
         
         ## save the json file
+
         with open(os.path.join(config["data_split_path"], "folds_data.json"), "w") as file:                      
             file.write(dict_to_json)
     else:
         with open(os.path.join(config["data_split_path"], "folds_data.json"), "r") as file:
-            data_split = json.load(file)
+
         
             
 
@@ -114,6 +115,7 @@ def run(config):
 
         ## model configuration
         writer = SummaryWriter(log_dir=os.path.join(config["writer_path"], config["model_name"],f"fold_{fold_index}" ))
+
         
         student_model = ResUNET_channel_attention(in_channels=config["model_params"]["in_channels"], out_channels=config["model_params"]["out_channels"],)
         student_model = nn.DataParallel(student_model)
@@ -151,7 +153,9 @@ def run(config):
                       fold=fold_index,
                       )
         
+
         save_history(history, os.path.join(config["results_path"] , config["model_name"]) , epochs=EPOCHS, fold_no=fold_index)
+
         
         ## 
         

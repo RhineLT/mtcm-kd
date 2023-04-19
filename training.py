@@ -33,7 +33,7 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
         data = data.to(device)
         target = target.to(device)
         
-        output = models['student_model']((data )[:, 1, ...].unsqueeze(1))
+        output = models['student_model']((data )[:, 0, ...].unsqueeze(1))
         #teacher_output2 = t1_model(data[:, 0, ...].unsqueeze(1))
        # if idx % 50 == 0:
           #  t1_model.eval()
@@ -121,7 +121,7 @@ def validitation_loss(models, loss_functions, lr_shedulars, valid_loader, epoch,
             data = data.to(device)
             target = target.to(device)
             
-            output = models['student_model']((data)[:, 1, ...].unsqueeze(1))
+            output = models['student_model']((data)[:, 0, ...].unsqueeze(1))
             
             #loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
             loss = loss_functions['combination_loss'](target, output)
@@ -194,7 +194,7 @@ def Fit(models, optimizers, loss_functions, lr_schedulars, train_loader, valid_l
     best_loss = 100000
     best_dice = 0
     
-   
+
     train_losses = []
     validitation_losses = []
     
@@ -209,6 +209,7 @@ def Fit(models, optimizers, loss_functions, lr_schedulars, train_loader, valid_l
         
         if valid_loss < best_loss:
             best_loss = valid_loss
+
             torch.save(models['student_model'].state_dict(),  os.path.join("saved_models",model_name, f"best_loss_{fold}.pth" ))            
         
         if dice_dict['mean'] > best_dice:
