@@ -1,4 +1,6 @@
 import json
+import os
+
 import torch
 from torch import Tensor
 import torch.nn.functional as F
@@ -130,7 +132,7 @@ def calculate_dice_score(model, loader, device, save_results=False, epoch=None, 
 
     if save_results:
         json_file = json.dumps(dice_dict)
-        f = open(f"./results/{model_name}/epoch_{epoch}_{data}.json", "w")
+        f = open(os.path.join("results", model_name, f"epoch_{epoch}_{data}.json"), "w")
         f.write(json_file)
         f.close()
 
@@ -171,6 +173,6 @@ def calculate_hd95_multi_class(preds, target, spacing=None, connectivity=1):
 
 def save_history(history, model_name, epochs,fold_no):
     json_file = json.dumps(history)
-    f = open(f"{model_name}/history_epoch_{epochs}_fold_no_{fold_no}.json", "w")
+    f = open(os.path.join(model_name, f"history_epoch_{epochs}_fold_no_{fold_no}.json"), "w")
     f.write(json_file)
     f.close()
