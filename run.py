@@ -145,7 +145,7 @@ def run(config):
         Cooperative_learning1 = Cooperative_learning1.to(devices[1])
         
         
-        Cooperative_learning2 = Cooperative_Learning_Module(in_channels=32, out_channels=4)
+        Cooperative_learning2 = Cooperative_Learning_Module(in_channels=128, out_channels=4)
         Cooperative_learning2 = nn.DataParallel(Cooperative_learning2, device_ids=[1])
         Cooperative_learning2 = Cooperative_learning2.to(devices[1])
         
