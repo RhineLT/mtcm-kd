@@ -102,7 +102,7 @@ def run(config):
     KL_divergence_fn = KL_divergence
     
     
-    for fold_index in range(0, 1):
+    for fold_index in range(0, 5):
         
          ## get the data loaders
         train_dl, validation_dl = get_loaders(
@@ -144,14 +144,21 @@ def run(config):
         Cooperative_learning1 = nn.DataParallel(Cooperative_learning1, device_ids=[1])
         Cooperative_learning1 = Cooperative_learning1.to(devices[1])
         
+        
+        Cooperative_learning2 = Cooperative_Learning_Module(in_channels=32, out_channels=4)
+        Cooperative_learning2 = nn.DataParallel(Cooperative_learning2, device_ids=[1])
+        Cooperative_learning2 = Cooperative_learning2.to(devices[1])
+        
+        
         sm_optimizer = optim.Adam(student_model.parameters(), lr=LEARNING_RATE) 
-        tm_optimizer1 = optim.Adam(teacher_model1.parameters(), lr=LEARNING_RATE)   
-        tm_optimizer2 = optim.Adam(teacher_model2.parameters(), lr=LEARNING_RATE)   
-        tm_optimizer3 = optim.Adam(teacher_model3.parameters(), lr=LEARNING_RATE)
-        cooperative_optimizer = optim.Adam(Cooperative_learning1.parameters(), lr=LEARNING_RATE)
+        #tm_optimizer1 = optim.Adam(teacher_model1.parameters(), lr=LEARNING_RATE)   
+        #tm_optimizer2 = optim.Adam(teacher_model2.parameters(), lr=LEARNING_RATE)   
+        #tm_optimizer3 = optim.Adam(teacher_model3.parameters(), lr=LEARNING_RATE)
+        
+        #cooperative_optimizer = optim.Adam(Cooperative_learning1.parameters(), lr=LEARNING_RATE)
         generalized_optimizer = optim.Adam(list(teacher_model1.parameters()) +
                                            list(teacher_model2.parameters()) + list(teacher_model3.parameters()) + 
-                                           list(Cooperative_learning1.parameters()), lr=LEARNING_RATE)
+                                           list(Cooperative_learning1.parameters(), list(Cooperative_learning2.parameters())), lr=LEARNING_RATE)
        
         ### learning schedulars 
         lr_scheduler_one_cycle = OneCycleLR(sm_optimizer, max_lr=LEARNING_RATE, steps_per_epoch=len(train_dl), epochs=EPOCHS)
@@ -159,9 +166,9 @@ def run(config):
         
         
         models = {"student_model": student_model, "teacher_model1": teacher_model1, "teacher_model2": teacher_model2, "teacher_model3": teacher_model3,
-                  "Cooperative_learning1": Cooperative_learning1 }
-        optimizers = {"student_optimizer": sm_optimizer, "teacher_optimizer1": tm_optimizer1, "teacher_optimizer2": tm_optimizer2, 
-                      "teacher_optimizer3": tm_optimizer3, "cooperative_optimizer": cooperative_optimizer, "generalized_optimizer": generalized_optimizer}
+                  "Cooperative_learning1": Cooperative_learning1 , "Cooperative_learning2": Cooperative_learning2}
+        optimizers = {"student_optimizer": sm_optimizer, "teacher_optimizer1": None, "teacher_optimizer2": None, 
+                      "teacher_optimizer3": None, "cooperative_optimizer": None, "generalized_optimizer": generalized_optimizer}
         loss_functions = {"dice_loss": dice_loss_fn, "jaccard_loss": jaccard_loss_fn, "cross_entropy_loss": CrossEntropyLoss_fn, "combination_loss": combination_loss_fn,
                           "kl_div_loss": KL_divergence_fn}
         lr_schedulars = {"one_cycle": lr_scheduler_one_cycle, "plateau": lr_scheduler_plateau}
