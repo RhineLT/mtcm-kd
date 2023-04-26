@@ -158,7 +158,7 @@ def run(config):
         #cooperative_optimizer = optim.Adam(Cooperative_learning1.parameters(), lr=LEARNING_RATE)
         generalized_optimizer = optim.Adam(list(teacher_model1.parameters()) +
                                            list(teacher_model2.parameters()) + list(teacher_model3.parameters()) + 
-                                           list(Cooperative_learning1.parameters(), list(Cooperative_learning2.parameters())), lr=LEARNING_RATE)
+                                           list(Cooperative_learning1.parameters()) + list(Cooperative_learning2.parameters()), lr=LEARNING_RATE)
        
         ### learning schedulars 
         lr_scheduler_one_cycle = OneCycleLR(sm_optimizer, max_lr=LEARNING_RATE, steps_per_epoch=len(train_dl), epochs=EPOCHS)
