@@ -20,10 +20,15 @@ from metrics import calculate_dice_score, calculate_hd95_multi_class, save_histo
 from utils import initialize_weights
 
 
+
+
 def run(config):
 
     ## device configuration
+    
+    os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    
 
     ## settings
     EPOCHS = config["num_epochs"]
@@ -97,7 +102,7 @@ def run(config):
     KL_divergence_fn = KL_divergence
     
     
-    for fold_index in range(1, 5):
+    for fold_index in range(0, 1):
         
          ## get the data loaders
         train_dl, validation_dl = get_loaders(
