@@ -104,17 +104,26 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
         
         
         
-        output, level_1_student, _ = models['student_model']((data )[:, 1, ...].unsqueeze(1), deep_supervision=True, student=True)
-        teacher_output1, level_1_t1, _ = models["teacher_model1"](data[:, 0, ...].unsqueeze(1), deep_supervision=True)
-        teacher_output2, level_1_t2, _ = models["teacher_model2"](data[:, 2, ...].unsqueeze(1), deep_supervision=True)
-        teacher_output3, level_1_t3, _ = models["teacher_model3"](data[:, 3, ...].unsqueeze(1), deep_supervision=True)
+        output, level_1_student, level_2_student = models['student_model']((data )[:, 1, ...].unsqueeze(1), deep_supervision=True, student=True)
+        teacher_output1, level_1_t1, level_2_t1 = models["teacher_model1"](data[:, 0, ...].unsqueeze(1), deep_supervision=True)
+        teacher_output2, level_1_t2, level_2_t2 = models["teacher_model2"](data[:, 2, ...].unsqueeze(1), deep_supervision=True)
+        teacher_output3, level_1_t3, level_2_t3 = models["teacher_model3"](data[:, 3, ...].unsqueeze(1), deep_supervision=True)
         
-        ## cooperative learning
-        cooperative_output = models['Cooperative_learning1'](level_1_t1, level_1_t2, level_1_t3)
-        reshape = reshape_3d(64, 64, 64)
-        ## change the data type of the target to float
-        reshape_target = reshape(target.clone().float()).long()
-        cooperative_loss = loss_functions['combination_loss'](reshape_target, cooperative_output.to(device[0]))
+        ## cooperative learning level 1 loss calculation
+        cooperative_output1 = models['Cooperative_learning1'](level_1_t1, level_1_t2, level_1_t3)
+        reshape1 = reshape_3d(64, 64, 64)
+        ## change the data type of the target to float and then to long
+        reshape_target1 = reshape1(target.clone().float()).long()
+        cooperative_loss1 = loss_functions['combination_loss'](reshape_target1, cooperative_output1.to(device[0]))
+        
+        
+        ## cooperative learning level 2 loss calculation
+        cooperative_output2 = models['Cooperative_learning2'](level_2_t1, level_2_t2, level_2_t3)
+        reshape2 = reshape_3d(32, 32, 32)
+        reshape_target2 = reshape2(target.clone().float()).long()
+        cooperative_loss2 = loss_functions['combination_loss'](reshape_target2, cooperative_output2.to(device[0]))
+        
+        
         
         
         
@@ -129,29 +138,11 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
         t2_wt_score += temp_list[1]
         t3_wt_score += temp_list[2]
         
-        total_teacher_loss_cooperative = teacher_loss1 + teacher_loss2 + teacher_loss3 + 0.10* cooperative_loss
+        total_teacher_loss_cooperative = teacher_loss1 + teacher_loss2 + teacher_loss3 + 0.08*cooperative_loss1 + 0.05* cooperative_loss2
         
         optimizers['generalized_optimizer'].zero_grad()
         total_teacher_loss_cooperative.backward()
         optimizers['generalized_optimizer'].step()
-        
-        #optimizers['teacher_optimizer1'].zero_grad()
-        #teacher_loss1.backward()
-        #optimizers['teacher_optimizer1'].step()
-        
-        #optimizers['teacher_optimizer2'].zero_grad()
-        #teacher_loss2.backward()
-        #optimizers['teacher_optimizer2'].step()
-        
-        #optimizers['teacher_optimizer3'].zero_grad()
-        #teacher_loss3.backward()
-        #optimizers['teacher_optimizer3'].step()
-        
-        
-        #optimizers['cooperative_optimizer'].zero_grad()
-        #cooperative_loss.backward()
-        #optimizers['cooperative_optimizer'].step()
-        
         
         
         
@@ -161,18 +152,24 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
             kl_divergence_loss_1 = kd_loss(output, teacher_output1.to(device[0]), T)
             kl_divergence_loss_2 = kd_loss(output, teacher_output2.to(device[0]), T)
             kl_divergence_loss_3 = kd_loss(output, teacher_output3.to(device[0]), T)
-            deep_supervison_KL_loss = kd_loss(level_1_student, cooperative_output.to(device[0]), T)
+            deep_supervison_KL_loss1 = kd_loss(level_1_student, cooperative_output1.to(device[0]), T)
+            deep_supervison_KL_loss2 = kd_loss(level_2_student, cooperative_output2.to(device[0]), T)
             KL_Loss = True
             
         else: 
             KL_Loss = False
             
         ## deep supervision loss 
-        deep_supervision_loss = loss_functions['combination_loss'](reshape_target.to(device[0]), level_1_student.to(device[0]))
+        deep_supervision_loss1 = loss_functions['combination_loss'](reshape_target1.to(device[0]), level_1_student.to(device[0]))
         
         #loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
-        loss = (0.75*loss_functions['combination_loss'](target, output) + weights[0] * kl_divergence_loss_1 + weights[1] *  
-                kl_divergence_loss_2 + weights[2] * kl_divergence_loss_3 + 0.10 *(0.7*deep_supervision_loss + 0.3* deep_supervison_KL_loss)) if KL_Loss else loss_functions['combination_loss'](target, output)
+        
+        if KL_Loss:
+            loss = (0.75*loss_functions['combination_loss'](target, output) + weights[0] * kl_divergence_loss_1 + weights[1] * 
+                kl_divergence_loss_2 + weights[2] * kl_divergence_loss_3 + 0.10 *(0.7*deep_supervision_loss1 + 0.3* deep_supervison_KL_loss1
+                                                                                  + 0.7*deep_supervison_KL_loss2 + 0.3*deep_supervison_KL_loss2))
+        else:
+            loss = loss_functions['combination_loss'](target, output)
         
         
         # zero the parameter gradients
