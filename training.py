@@ -1,9 +1,10 @@
+import os
+import json
+
 import torch
 import torch.nn as nn
 
 from metrics import calculate_dice_score, calculate_hd95_multi_class, multiclass_dice_coeff
-import json
-
 from dataset import reshape_3d
 
 
@@ -335,17 +336,18 @@ def Fit(models, optimizers, loss_functions, lr_schedulars, train_loader, valid_l
         
         if valid_loss < best_loss:
             best_loss = valid_loss
-            torch.save(models['student_model'].state_dict(),f"saved_models//{model_name}//best_loss_{fold}.pth")
+
+            torch.save(models['student_model'].state_dict(),  os.path.join("saved_models",model_name, f"best_loss_{fold}.pth" ))            
         
         if dice_dict['mean'] > best_dice:
             best_dice = dice_dict['mean']
-            torch.save(models['student_model'].state_dict(), f"saved_models//{model_name}//best_dice_{fold}.pth")
+            torch.save(models['student_model'].state_dict(), os.path.join("saved_models",model_name, f"best_loss_{fold}.pth"))
             
         
         ## save the model 
-        torch.save(models['student_model'].state_dict(), f"saved_models//{model_name}//model_{fold}_{epoch}.pth")
+        torch.save(models['student_model'].state_dict(), os.path.join("saved_models",model_name, f"best_loss_{fold}_{epoch}.pth"))
         ## dump the dice dict to json file
-        with open(f"results//{model_name}//dice_dict_{fold}_{epoch}.json", "w") as f:
+        with open(os.path.join("results", model_name, f"dice_dict_{fold}_{epoch}.json"), "w") as f:
             json.dump(dice_dict, f)
         
         
