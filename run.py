@@ -94,6 +94,8 @@ def run(config):
     else:
         with open(os.path.join(config["data_split_path"], "folds_data.json"), "r") as file:
             data_split = json.load(file)
+
+        
             
 
     dice_loss_fn = dice_loss
@@ -123,6 +125,7 @@ def run(config):
  
         ## model configuration
         writer = SummaryWriter(log_dir=os.path.join(config["writer_path"], config["model_name"],f"fold_{fold_index}" ))
+
         
         student_model = ResUNET_channel_attention(in_channels=config["model_params"]["in_channels"], out_channels=config["model_params"]["out_channels"],)
         student_model = nn.DataParallel(student_model, device_ids=[0])
@@ -133,9 +136,11 @@ def run(config):
         teacher_model1 = nn.DataParallel(teacher_model1, device_ids=[1])
         teacher_model1 = teacher_model1.to(devices[1])
         
+
         teacher_model2 = ResUNET_channel_attention(in_channels=config["model_params"]["in_channels"], out_channels=config["model_params"]["out_channels"],)
         teacher_model2 = nn.DataParallel(teacher_model2, device_ids=[1])
         teacher_model2 = teacher_model2.to(devices[1])
+
         
         teacher_model3 = ResUNET_channel_attention(in_channels=config["model_params"]["in_channels"], out_channels=config["model_params"]["out_channels"],)
         teacher_model3 = nn.DataParallel(teacher_model3, device_ids=[1])
@@ -187,7 +192,9 @@ def run(config):
                       fold=fold_index,
                       )
         
+
         save_history(history, os.path.join(config["results_path"] , config["model_name"]) , epochs=EPOCHS, fold_no=fold_index)
+
         
         ## 
         

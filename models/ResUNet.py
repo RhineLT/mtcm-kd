@@ -69,11 +69,13 @@ class ResUNET_channel_attention(nn.Module):
         x6 = self.up_residual_conv_1(x5_attention)
         
 
+
         x6_up = self.upsample_2(x6)
         x7 = torch.cat([x6_up, x2], dim=1)
         x7_attention = self.channel_attention_2(x7)
         x8 = self.up_residual_conv_2(x7_attention)
         
+
 
         x8_up = self.upsample_3(x8)
         x9 = torch.cat([x8_up, x1], dim=1)
