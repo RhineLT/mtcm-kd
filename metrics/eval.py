@@ -36,7 +36,6 @@ def dice_coeff(input: Tensor, target: Tensor, reduce_batch_first: bool = False, 
 
 def multiclass_dice_coeff(preds: Tensor, target: Tensor, reduce_batch_first: bool = False, epsilon=1e-6):
     # Average of Dice coefficient for all classes
-    
 
     target = F.one_hot(target, 4).permute(0,4,1,2,3).float()
     input = F.one_hot(preds.argmax(1), 4).permute(0,4,1,2,3).float()
@@ -81,7 +80,7 @@ def multiclass_dice_coeff(preds: Tensor, target: Tensor, reduce_batch_first: boo
     
 
 
-def calculate_dice_score(model, loader, device, save_results=False, epoch=None, data=None, model_name=None):
+def calculate_dice_score(model, loader, device, modality, save_results=False, epoch=None, data=None, model_name=None):
     
     dice_dict = {}
     dice_dict['mean'] = 0.0
@@ -96,8 +95,9 @@ def calculate_dice_score(model, loader, device, save_results=False, epoch=None, 
         for  x, y in loader:
             x = x.to(device)
             y = y.to(device)
+            model = model.to(device)
   
-            output = model(x)
+            output = model((x)[:, modality, ...].unsqueeze(1))
             
             preds = torch.softmax(output, dim=1)
             batch_dict = multiclass_dice_coeff(preds=preds, target=y)
@@ -122,7 +122,10 @@ def calculate_dice_score(model, loader, device, save_results=False, epoch=None, 
     dice_dict['ET'] = dice_dict['ET'].detach().cpu().item()
     dice_dict['whole_tumor'] = dice_dict['whole_tumor'].detach().cpu().item()
     dice_dict['tumor_core'] = dice_dict['tumor_core'].detach().cpu().item()
-
+    
+    modality_map = {0: 'FLAIR', 1: 'T1ce', 2: 'T2', 3: 'T1'}
+    
+    print(f"Modality: {modality_map[modality]}")
     print(f"dice mean score: {dice_dict['mean']}")
     print(f"N-NE dice score: {dice_dict['N-NE']}")
     print(f"ED dice score: {dice_dict['ED']}")
@@ -130,6 +133,7 @@ def calculate_dice_score(model, loader, device, save_results=False, epoch=None, 
     print(f"whole tumor dice score: {dice_dict['whole_tumor']}")
     print(f"tumor core dice score: {dice_dict['tumor_core']}")
 
+        
     if save_results:
         json_file = json.dumps(dice_dict)
         f = open(os.path.join("results", model_name, f"epoch_{epoch}_{data}.json"), "w")
@@ -167,7 +171,6 @@ def calculate_hd95_multi_class(preds, target, spacing=None, connectivity=1):
     hd95_dict['ET'] /= preds.shape[0]
 
     return hd95_dict
-
 
 
 

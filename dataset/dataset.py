@@ -46,7 +46,9 @@ class BraTS_Dataset(Dataset):
         ## min max scaler for only non zero values
         image_volume = image_volume - image_volume.min() / image_volume.max() - image_volume.min()
         #if image_volume[image_volume != 0].min() != image_volume[image_volume != 0].max():
-            #image_volume[image_volume != 0] = (image_volume[image_volume != 0] - image_volume[image_volume != 0].min()) / (image_volume[image_volume != 0].max() - image_volume[image_volume != 0].min())
+
+           # image_volume[image_volume != 0] = (image_volume[image_volume != 0] - image_volume[image_volume != 0].min()) / (image_volume[image_volume != 0].max() - image_volume[image_volume != 0].min())
+
         
         
         if self.target_transform:  
