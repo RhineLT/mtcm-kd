@@ -165,9 +165,9 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
         #loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
         
         if KL_Loss:
-            loss = (0.75*loss_functions['combination_loss'](target, output) + weights[0] * kl_divergence_loss_1 + weights[1] * 
-                kl_divergence_loss_2 + weights[2] * kl_divergence_loss_3 + 0.10 *(0.7*deep_supervision_loss1 + 0.3* deep_supervison_KL_loss1
-                                                                                  + 0.7*deep_supervison_KL_loss2 + 0.3*deep_supervison_KL_loss2))
+            loss = (0.70*loss_functions['combination_loss'](target, output) + weights[0] * kl_divergence_loss_1 + weights[1] * 
+                kl_divergence_loss_2 + weights[2] * kl_divergence_loss_3 + 0.08 *(0.7*deep_supervision_loss1 + 0.3* deep_supervison_KL_loss1)
+                                                                                  +0.02*(0.6*deep_supervison_KL_loss2 + 0.4*deep_supervison_KL_loss2))
         else:
             loss = loss_functions['combination_loss'](target, output)
         
@@ -205,7 +205,7 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
     t2_wt_score /= len(train_loader)
     t3_wt_score /= len(train_loader)
     
-    weights = performance_base_weight_calculation(t1_wt_score, t2_wt_score, t3_wt_score, total_weight=0.15)
+    weights = performance_base_weight_calculation(t1_wt_score, t2_wt_score, t3_wt_score, total_weight=0.20)
     
     print(f"t1_wt_score: {t1_wt_score}")
     print(f"t2_wt_score: {t2_wt_score}")
