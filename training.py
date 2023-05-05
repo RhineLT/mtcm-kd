@@ -164,13 +164,14 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
             
         ## deep supervision loss 
         deep_supervision_loss1 = loss_functions['combination_loss'](reshape_target1.to(device[0]), level_1_student.to(device[0]))
+        deep_supervision_loss2 = loss_functions['combination_loss'](reshape_target2.to(device[0]), level_2_student.to(device[0]))
         
         #loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
         
         if KL_Loss:
             loss = (0.70*loss_functions['combination_loss'](target, output) + weights[0] * kl_divergence_loss_1 + weights[1] * 
-                kl_divergence_loss_2 + weights[2] * kl_divergence_loss_3 + 0.08 *(0.7*deep_supervision_loss1 + 0.3* deep_supervison_KL_loss1)
-                                                                                  +0.02*(0.6*deep_supervison_KL_loss2 + 0.4*deep_supervison_KL_loss2))
+                kl_divergence_loss_2 + weights[2] * kl_divergence_loss_3 + 0.07 *(0.7*deep_supervision_loss1 + 0.3* deep_supervison_KL_loss1)
+                                                                                  +0.03*(0.6*deep_supervision_loss2 + 0.4*deep_supervison_KL_loss2))
         else:
             loss = loss_functions['combination_loss'](target, output)
         
