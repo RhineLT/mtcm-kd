@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-
+__all__ = ['ChannalGate', 'SpatialGate', 'CBAM']
 
 ### SENet attention module
 class SENet(nn.Module):
