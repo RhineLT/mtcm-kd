@@ -5,7 +5,10 @@
 *.cubin
 *.fatbin
 BraTS_Dataset
+BraTS_2018
+BraTS_2020
 *.tar
+*.zip
 saved_models/
 __pycache__/
 runs/
