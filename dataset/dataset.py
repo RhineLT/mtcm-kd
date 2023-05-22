@@ -21,7 +21,8 @@ class BraTS_Dataset(Dataset):
     def __getitem__(self, index):
         voxels = []
         img_id = self.samples[index]
-
+        
+        ## note, BraTS 2018 dataset files are not ziped, so we don't need to unzip them, remove the .gz extension
         for nii in [f'{self.dataset_dir}/{img_id}/{img_id}_{s_type}.nii.gz' for s_type in ["flair", "t1ce", "t2", "t1", "seg"]]:
     
             image= nib.load(nii,).get_fdata()

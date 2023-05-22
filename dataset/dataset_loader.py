@@ -1,6 +1,7 @@
 from .dataset import BraTS_Dataset
 from torch.utils.data import DataLoader
 
+__all__ = ["get_loaders", "get_test_loaders"]
 
 def get_loaders(
     dataset_dir,
@@ -59,3 +60,29 @@ def get_loaders(
        # )
 
     return train_dl, validation_dl #, test_dl
+
+
+def get_test_loaders(
+    dataset_dir,
+    batch_size,
+    data_dict,
+    test_images_transform,
+    test_masks_transform,
+    ):
+
+
+    test_ds = BraTS_Dataset(
+        dataset_dir= dataset_dir, 
+        data_dict=data_dict,
+        data_type='test',
+        transform = test_images_transform, 
+        target_transform = test_masks_transform)
+    
+    test_dl = DataLoader(
+        dataset = test_ds,
+        batch_size = batch_size,
+        shuffle = False, 
+        pin_memory=True,
+        )
+
+    return  test_dl
