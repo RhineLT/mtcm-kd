@@ -163,7 +163,7 @@ def test_models(models, test_loader, device):
         print("===========================================")
         
         ## save the dice dict
-        dataset_name = "BraTS_2020"
+        dataset_name = "BraTS_2019"
         with open(os.path.join("results", "test_results", config["model_name"],  f"{dataset_name}_dice_dict.json"), "w") as f:
             json.dump(dice_dict, f)
         
