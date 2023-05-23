@@ -6,6 +6,7 @@
 *.fatbin
 BraTS_Dataset
 BraTS_2018
+BraTS_2019
 BraTS_2020
 *.tar
 *.zip
