@@ -163,7 +163,7 @@ def test_models(models, test_loader, device):
         print("===========================================")
         
         ## save the dice dict
-        dataset_name = "BraTS_2019"
+        dataset_name = "BraTS_2020"
         with open(os.path.join("results", "test_results", config["model_name"],  f"{dataset_name}_dice_dict.json"), "w") as f:
             json.dump(dice_dict, f)
         
@@ -177,7 +177,7 @@ def test_models(models, test_loader, device):
 
 if __name__ == "__main__":
    
-    dataset_dir = "BraTS_2019"
+    dataset_dir = "BraTS_2020/MICCAI_BraTS2020_TrainingData"
     config = json.load(open("config.json"))
     data = read_data(dataset_dir= dataset_dir)
     inference(config=config, data_dict=data[0], dataset_dir=dataset_dir)
