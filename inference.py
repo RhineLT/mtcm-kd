@@ -13,7 +13,7 @@ from dataset import get_test_loaders, reshape_3d
 from metrics import calculate_dice_score, calculate_hd95_multi_class, save_history, multiclass_dice_coeff
 
 
-def inference(config, data_dict, dataset_dir):
+def inference(config, data_dict, dataset_dir, dataset_name, testONT1ce):
 
     ## device configuration
     os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
@@ -73,8 +73,9 @@ def inference(config, data_dict, dataset_dir):
         student_models[fold].load_state_dict(torch.load(model_path))
     
     
-    ### test the model
-    dice_dict = test_models(models=student_models, test_loader=test_dl, device=devices)
+    
+    
+    test_models(models=student_models, test_loader=test_dl, device=devices, dataset_name=dataset_name, testONT1ce=testONT1ce)
     
     
     
@@ -93,7 +94,7 @@ def read_data(dataset_dir):
     return data   
 
 
-def test_models(models, test_loader, device):
+def test_models(models, test_loader, device, dataset_name, testONT1ce):
     """
     param:
         models: a list of models for testing
@@ -109,66 +110,85 @@ def test_models(models, test_loader, device):
     for fold in range(5):
         models[fold].eval()
     
-    dice_dict = {}
-    dice_dict["ED"] = 0
-    dice_dict["ET"] = 0
-    dice_dict["N-NE"] = 0
-    dice_dict["mean"] = 0
-    dice_dict["whole_tumor"] = 0
-    dice_dict["tumor_core"] = 0
+    ### test the model
+    hetero_modalities = {
+        "FLAIR": 0,
+        "T1ce": 1, 
+        "T2": 2,
+        "T1": 3,
+    }
     
-    with torch.no_grad():
-        for idx, (data, target) in enumerate(test_loader):
-            data = data.to(device[0])
-            target = target.to(device[0])
+    
+    
+    
+    for x in  [hetero_modalities.values() if not testONT1ce else [1]]:
+        for modal in x:
+            dice_dict = {}
+            dice_dict["ED"] = 0
+            dice_dict["ET"] = 0
+            dice_dict["N-NE"] = 0
+            dice_dict["mean"] = 0
+            dice_dict["whole_tumor"] = 0
+            dice_dict["tumor_core"] = 0
+        
+        
+            print(f"Testing on {modal}")
+            with torch.no_grad():
+                for idx, (data, target) in enumerate(test_loader):
+                    data = data.to(device[0])
+                    target = target.to(device[0])
             
             
-            ## torch list to tensor
-            outputs = []
+                    ## torch list to tensor
+                    outputs = []
             
-            for fold in range(5):
-                outputs.append(models[fold](data[:, 1, ...].unsqueeze(1)))
+                    for fold in range(5):
+                        outputs.append(models[fold](data[:, modal, ...].unsqueeze(1)))
             
-            final_output = torch.mean(torch.stack(outputs), dim=0)
+                    final_output = torch.mean(torch.stack(outputs), dim=0)
 
             
           
-            preds = torch.softmax(final_output, dim=1)
-            temp_dice_dict = multiclass_dice_coeff(preds=preds, target=target)
-            dice_dict['mean'] += temp_dice_dict['mean'].detach().cpu().item()
-            dice_dict['N-NE'] += temp_dice_dict['N-NE'].detach().cpu().item()
-            dice_dict['ED'] += temp_dice_dict['ED'].detach().cpu().item()
-            dice_dict['ET'] += temp_dice_dict['ET'].detach().cpu().item()
-            dice_dict['whole_tumor'] += temp_dice_dict['whole_tumor'].detach().cpu().item()
-            dice_dict['tumor_core'] += temp_dice_dict['tumor_core'].detach().cpu().item()
+                    preds = torch.softmax(final_output, dim=1)
+                    temp_dice_dict = multiclass_dice_coeff(preds=preds, target=target)
+                    dice_dict['mean'] += temp_dice_dict['mean'].detach().cpu().item()
+                    dice_dict['N-NE'] += temp_dice_dict['N-NE'].detach().cpu().item()
+                    dice_dict['ED'] += temp_dice_dict['ED'].detach().cpu().item()
+                    dice_dict['ET'] += temp_dice_dict['ET'].detach().cpu().item()
+                    dice_dict['whole_tumor'] += temp_dice_dict['whole_tumor'].detach().cpu().item()
+                    dice_dict['tumor_core'] += temp_dice_dict['tumor_core'].detach().cpu().item()
             
         
 
         
-        dice_dict['mean'] /= len(test_loader)
-        dice_dict['N-NE'] /= len(test_loader)
-        dice_dict['ED'] /= len(test_loader)
-        dice_dict['ET'] /= len(test_loader)
-        dice_dict['whole_tumor'] /= len(test_loader)
-        dice_dict['tumor_core'] /= len(test_loader)
+                dice_dict['mean'] /= len(test_loader)
+                dice_dict['N-NE'] /= len(test_loader)
+                dice_dict['ED'] /= len(test_loader)
+                dice_dict['ET'] /= len(test_loader)
+                dice_dict['whole_tumor'] /= len(test_loader)
+                dice_dict['tumor_core'] /= len(test_loader)
         
-        print("===========================================")
-        print(f"dice mean score: {dice_dict['mean']}")
-        print(f"N-NE dice score: {dice_dict['N-NE']}")
-        print(f"ED dice score: {dice_dict['ED']}")
-        print(f"ET dice score: {dice_dict['ET']}")
-        print(f"Whole tumor dice score: {dice_dict['whole_tumor']}")
-        print(f"Tumor core dice score: {dice_dict['tumor_core']}")
+                print("===========================================")
+                print(f"dice mean score: {dice_dict['mean']}")
+                print(f"N-NE dice score: {dice_dict['N-NE']}")
+                print(f"ED dice score: {dice_dict['ED']}")
+                print(f"ET dice score: {dice_dict['ET']}")
+                print(f"Whole tumor dice score: {dice_dict['whole_tumor']}")
+                print(f"Tumor core dice score: {dice_dict['tumor_core']}")
         
-        print("===========================================")
+                print("===========================================")
+            
+                if not testONT1ce:
+                    result_sub_dir = "hetero_modal_results"
+                else:
+                    result_sub_dir = "test_results_on_T1ce"
         
-        ## save the dice dict
-        dataset_name = "BraTS_2020"
-        with open(os.path.join("results", "test_results", config["model_name"],  f"{dataset_name}_dice_dict.json"), "w") as f:
-            json.dump(dice_dict, f)
+                with open(os.path.join("results", result_sub_dir, config["model_name"],  f"{dataset_name}_dice_dict_{modal}.json"), "w") as f:
+                    json.dump(dice_dict, f)
         
         
-    return dice_dict
+    
+
 
 
 
@@ -178,7 +198,8 @@ def test_models(models, test_loader, device):
 if __name__ == "__main__":
    
     dataset_dir = "BraTS_2020/MICCAI_BraTS2020_TrainingData"
+    dataset_name = "BraTS_2020"
     config = json.load(open("config.json"))
     data = read_data(dataset_dir= dataset_dir)
-    inference(config=config, data_dict=data[0], dataset_dir=dataset_dir)
+    inference(config=config, data_dict=data[0], dataset_dir=dataset_dir, dataset_name=dataset_name, testONT1ce=False)
     
