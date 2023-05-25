@@ -42,7 +42,14 @@ def calculate_wt_dice_for_teacher_models(t1_preds, t2_preds, t3_preds, target, d
     preds = torch.softmax(t3_preds, dim=1)
     t3_dice_dict = multiclass_dice_coeff(preds=preds, target=target)
     
-    wt_dice_scores = [t1_dice_dict['whole_tumor'], t2_dice_dict['whole_tumor'], t3_dice_dict['whole_tumor']]
+    wt_dice_scores = [t1_dice_dict['whole_tumor'] , t2_dice_dict['whole_tumor'], t3_dice_dict['whole_tumor']]
+    
+    ## only for T1 modality
+    tc_dice_scores = [t1_dice_dict['tumor_core'], t2_dice_dict['tumor_core'], t3_dice_dict['tumor_core']]
+    
+    for index in range(len(wt_dice_scores)):
+        wt_dice_scores[index] = (wt_dice_scores[index] + tc_dice_scores[index]) * 0.5
+    
     
     return wt_dice_scores
 
@@ -107,10 +114,10 @@ def train_one_epoch(models, optimizers, loss_functions, lr_shedulars, train_load
         
         
         
-        output, level_1_student, _ = models['student_model']((data )[:, 1, ...].unsqueeze(1), deep_supervision=True, student=True)
+        output, level_1_student, _ = models['student_model']((data )[:, 3, ...].unsqueeze(1), deep_supervision=True, student=True)
         teacher_output1, level_1_t1, _ = models["teacher_model1"](data[:, 0, ...].unsqueeze(1), deep_supervision=True)
         teacher_output2, level_1_t2, _ = models["teacher_model2"](data[:, 2, ...].unsqueeze(1), deep_supervision=True)
-        teacher_output3, level_1_t3, _ = models["teacher_model3"](data[:, 3, ...].unsqueeze(1), deep_supervision=True)
+        teacher_output3, level_1_t3, _ = models["teacher_model3"](data[:, 1, ...].unsqueeze(1), deep_supervision=True)
         
         ## cooperative learning level 1 loss calculation
         cooperative_output1 = models['Cooperative_learning1'](level_1_t1, level_1_t2, level_1_t3)
@@ -252,7 +259,7 @@ def validitation_loss(models, loss_functions, lr_shedulars, valid_loader, epoch,
             data = data.to(device[0])
             target = target.to(device[0])
             
-            output = models['student_model']((data)[:, 1, ...].unsqueeze(1))
+            output = models['student_model']((data)[:, 3, ...].unsqueeze(1))
             
             #loss = (dice_loss(target, output) + jaccard_loss(target, output) + ce_loss(output, target))/3.0
             loss = loss_functions['combination_loss'](target, output)

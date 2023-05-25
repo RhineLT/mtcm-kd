@@ -8,9 +8,9 @@ class Cooperative_Learning_Module(nn.Module):
     def __init__(self, in_channels, out_channels=1):
         super().__init__()
         
-        self.cbam_attention1 = CBAM(in_channels)
-        self.cbam_attention2 = CBAM(in_channels)
-        self.cbam_attention3 = CBAM(in_channels)
+        self.channel_attention1 = ChannelGate(in_channels)
+        self.channel_attention2 = ChannelGate(in_channels)
+        self.channel_attention3 = ChannelGate(in_channels)
         
         self.intermediate_conv1 = nn.Conv3d(in_channels, out_channels, kernel_size=1, stride=1,)
         self.intermediate_conv2 = nn.Conv3d(in_channels, out_channels, kernel_size=1, stride=1,)
@@ -22,9 +22,9 @@ class Cooperative_Learning_Module(nn.Module):
     def forward(self, x1, x2, x3):
         
         
-        x1 = self.cbam_attention1(x1) 
-        x2 = self.cbam_attention2(x2) 
-        x3 = self.cbam_attention3(x3) 
+        x1 = self.channel_attention1(x1) 
+        x2 = self.channel_attention2(x2) 
+        x3 = self.channel_attention3(x3) 
         
         x1 = self.intermediate_conv1(x1)
         x2 = self.intermediate_conv2(x2)
