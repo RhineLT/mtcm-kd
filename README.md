@@ -1,2 +1,2 @@
-# Multi-Modal Cross Modality (MMCM) Knowledge Distillation for Brain Tumor Segmentation with Cooperative Deep Supvision Learning
+# Multi-Teacher Cross Modal (MTCM) Knowledge Distillation for Brain Tumor Segmentation with Cooperative Deep Supvision Learning (CDSL)
 
