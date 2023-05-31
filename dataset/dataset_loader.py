@@ -85,4 +85,4 @@ def get_test_loaders(
         pin_memory=True,
         )
 
-    return  test_dl
+    return  test_dl, test_ds
