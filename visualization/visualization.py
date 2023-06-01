@@ -112,7 +112,7 @@ def convert_gt_regions(y):
     
     label_encoding_ET[y == 3] = 1
     label_encoding_TC = np.where((y== 1) | (y==3), 1, 0) 
-    label_encoding_TC = np.where((y==1) | (y==2) | (y==3), 1, 0)
+    label_encoding_WT= np.where((y==1) | (y==2) | (y==3), 1, 0)
                         
     return label_encoding_ET, label_encoding_WT,  label_encoding_TC
 
