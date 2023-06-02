@@ -14,6 +14,6 @@ saved_models/
 __pycache__/
 runs/
 graphs/
-model_predictions/  
+model_predictions_best/  
 performance.json
 model_predictions_worst/

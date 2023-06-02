@@ -75,8 +75,8 @@ def visualize(config, data_dict, dataset_dir, testONT1ce=True):
     print(overall_performance[0].keys()) 
     
     ## visualize the volumes for worst 15 samples 
-    for idx in range(15):
-        sample = overall_performance[-idx + 1]["sample"]
+    for idx in range(10):
+        sample = overall_performance[idx]["sample"]
         print(sample)
         x, y = test_ds[sample]
         x = x.unsqueeze(0)
