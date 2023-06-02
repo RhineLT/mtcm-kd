@@ -16,3 +16,4 @@ runs/
 graphs/
 model_predictions/  
 performance.json
+model_predictions_worst/
