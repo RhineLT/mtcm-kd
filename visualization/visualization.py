@@ -147,10 +147,10 @@ def predict_and_save_volume(models, sample, test_batch, model_name, device, moda
     y_ET, y_WT, y_TC = convert_gt_regions(y[0,:,:,:].detach().cpu().numpy())
     
     
-    if not os.path.exists('model_predictions_best'):
-        os.makedirs('model_predictions_best')
+    if not os.path.exists('model_predictions_worst'):
+        os.makedirs('model_predictions_worst')
         
-    prediction_dir = "model_predictions_best"
+    prediction_dir = "model_predictions_worst"
     
     if not os.path.exists(os.path.join(prediction_dir, str(sample))):
         os.makedirs(os.path.join(prediction_dir, str(sample)))
