@@ -1,2 +1,3 @@
 # Multi-Teacher Cross Modal (MTCM) Knowledge Distillation for Brain Tumor Segmentation with Cooperative Deep Supvision Learning (CDSL)
+This is a noval approach for unimodal segmentation of brain tumor while taking leverages from all the modalities during training using multi-teacher cross-modal knowledge distillation along with cooperative deep supervision learning (CDSL). The unimodal approach in our technique mainly target the `T1ce` modality for the inference because of its availibility and the amount of information it carries to solve the problem of automation of brain tumor segmentation. 
 
