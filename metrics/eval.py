@@ -4,9 +4,9 @@ import os
 import torch
 from torch import Tensor
 import torch.nn.functional as F
-from  torch.cuda.amp import autocast
-from fastai.callbacks import *
-from fastai.vision import *
+#from  torch.cuda.amp import autocast
+#from fastai.callbacks import *
+#from fastai.vision import *
 
 from medpy.metric import hd95
 
