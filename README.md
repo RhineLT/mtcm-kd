@@ -1,4 +1,4 @@
-# Multi-Teacher Cross-Modal Distillation with Cooperative Deep Supervision Fusion Learning for Unimodal Brain Tumor Segmentation
+# Multi-Teacher Cross-Modal Distillation with Cooperative Deep Supervision Fusion Learning for Unimodal Segmentation
 
 Abstract
 ---
