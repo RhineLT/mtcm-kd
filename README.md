@@ -51,7 +51,7 @@ For visualizing the 3D MRI volumes of the brain tumor, first, make the predictio
 ```bash
 python visualize.py
 ```
-and then refer to the repository for the 3D visualization of the volumes: [3D nii Visulalizer](https://github.com/adamkwolf/3d-nii-visualizer)
+- then refer to the repository for the 3D visualization of the volumes: [3D nii Visulalizer](https://github.com/adamkwolf/3d-nii-visualizer)
 </p>
 
 </p>
