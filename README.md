@@ -17,6 +17,12 @@ The contribution of our work is stated below:
   - Performed extensive experiments and evaluated the framework on the BraTS datasets from 2018 to 2021. Our approach significantly outperforms previous state-of-the-art models in unimodal brain tumor segmentation. 
 
 ---
+
+Dataset
+---
+This work uses four BraTS datasets from 2018-2021. The first three BraTS datasets can be downloaded from [here](https://www.kaggle.com/datasets/andrewmvd/brain-tumor-segmentation-in-mri-brats-2015), While the BraTS-2021 dataset is available [here](https://www.kaggle.com/datasets/dschettler8845/brats-2021-task1).
+
+---
 Setup
 ---
 Install the requirements
@@ -47,7 +53,7 @@ python inference.py
 
 
 ## 3D Visualization
-For visualizing the 3D MRI volumes of the brain tumor, first, make the prediction for the 3D volumes of MRI using the executing the below script: 
+For visualizing the 3D MRI volumes of the brain tumor, first, predict the 3D volumes of MRI using the executing the below script: 
 ```bash
 python visualize.py
 ```
