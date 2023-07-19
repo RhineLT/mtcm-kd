@@ -50,9 +50,10 @@ For the inference of the model, make the necessary changes in the `inference.py`
 ```bash
 python inference.py
 ```
+---
 
-
-## 3D Visualization
+3D Visualization
+---
 For visualizing the 3D MRI volumes of the brain tumor, first, predict the 3D volumes of MRI using the executing the below script: 
 ```bash
 python visualize.py
