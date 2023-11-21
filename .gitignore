@@ -4,16 +4,29 @@
 *.ptx
 *.cubin
 *.fatbin
+
+## datasets 
 BraTS_Dataset
 BraTS_2018
 BraTS_2019
 BraTS_2020
+
+## compressed files
 *.tar
 *.zip
+
+## model files
 saved_models/
+
+## logs
 __pycache__/
 runs/
+
+## model predictions
 graphs/
 model_predictions_best/  
 performance.json
 model_predictions_worst/
+
+## image 
+*.png
