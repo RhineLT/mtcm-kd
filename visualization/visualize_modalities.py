@@ -22,9 +22,10 @@ def visualize_modalities(flair, t1, t1ce, t2, slice_no):
     
     
 if __name__ == "__main__":
-    flair = os.path.join(os.getcwd(), "BraTS_Dataset", "BraTS2021_00002", "BraTS2021_00002_flair.nii.gz")
-    t1 = os.path.join(os.getcwd(), "BraTS_Dataset",  "BraTS2021_00002", "BraTS2021_00002_t1.nii.gz")
-    t1ce = os.path.join(os.getcwd(), "BraTS_Dataset",  "BraTS2021_00002", "BraTS2021_00002_t1ce.nii.gz")
-    t2 = os.path.join(os.getcwd(), "BraTS_Dataset",  "BraTS2021_00002", "BraTS2021_00002_t2.nii.gz")
-    slice_no = 80
+    sample = "BraTS2021_00150"
+    flair = os.path.join(os.getcwd(), "BraTS_Dataset", sample, f"{sample}_flair.nii.gz")
+    t1 = os.path.join(os.getcwd(), "BraTS_Dataset",  sample, f"{sample}_t1.nii.gz")
+    t1ce = os.path.join(os.getcwd(), "BraTS_Dataset",  sample, f"{sample}_t1ce.nii.gz")
+    t2 = os.path.join(os.getcwd(), "BraTS_Dataset",  sample, f"{sample}_t2.nii.gz")
+    slice_no = 70
     visualize_modalities(flair, t1, t1ce, t2, slice_no)
