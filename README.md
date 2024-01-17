@@ -54,7 +54,7 @@ python inference.py
 
 3D Visualization
 ---
-For visualizing the 3D MRI volumes of the brain tumor, first, predict the 3D volumes of MRI using the executing the below script: 
+For visualizing the 3D MRI volumes of the brain tumor, first, predict the 3D volumes of MRI by executing the below script: 
 ```bash
 python visualize.py
 ```
