@@ -46,7 +46,7 @@ python run.py
 ```
 
 For the inference of the model, make the necessary changes in the `inference.py` file, and then run the script: 
-```bash
+```python
 python inference.py
 ```
 ---
@@ -54,12 +54,24 @@ python inference.py
 3D Visualization
 ---
 For visualizing the 3D MRI volumes of the brain tumor, first, predict the 3D volumes of MRI by executing the below script: 
-```bash
+```python
 python visualize.py
 ```
 - then refer to the repository for the 3D visualization of the volumes: [3D nii Visulalizer](https://github.com/adamkwolf/3d-nii-visualizer)
-</p>
 
-</p>
+Citation
+---
+```python
+@article{AHMAD2024111854,
+title = {Multi-teacher cross-modal distillation with cooperative deep supervision fusion learning for unimodal segmentation},
+journal = {Knowledge-Based Systems},
+pages = {111854},
+year = {2024},
+issn = {0950-7051},
+doi = {https://doi.org/10.1016/j.knosys.2024.111854},
+url = {https://www.sciencedirect.com/science/article/pii/S095070512400488X},
+author = {Saeed Ahmad and Zahid Ullah and Jeonghwan Gwak},
+}
+```
 
 
