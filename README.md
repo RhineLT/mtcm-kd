@@ -3,7 +3,7 @@
 Abstract
 ---
 <p align="justify">
-Accurate brain tumor segmentation is a labor-intensive and time-consuming task that requires automation to enhance its efficacy. Recent advanced techniques have shown promising results; however, their dependency on extensive multimodal magnetic resonance imaging (MRI) data limits their practicality in clinical environments where such data may not be readily available. To address this, we propose a novel multi-teacher cross-modal knowledge distillation framework, which utilizes the privileged multimodal data during training while relying solely on unimodal data for inference. Our framework is tailored to the unimodal segmentation of the ${T_{1ce}}$ MRI sequence, which is prevalently available in clinical practice and structurally akin to the ${T_{1}}$ modality, providing ample information for the segmentation task. Our framework introduces two learning strategies for knowledge distillation (KD): 1) performance-aware response-based KD and 2) cooperative deep supervision fusion learning (CDSFL). The first strategy involves dynamically assigning confidence weights to each teacher model based on its performance, ensuring that the KD is performance-driven, and the CDSFL module augments the learning capabilities of the multi-teacher models by fostering mutual learning. Moreover, the fused information is distilled into the student model to improve its deep supervision. Extensive experiments on BraTS datasets demonstrate that our framework achieves promising unimodal segmentation results on the ${T_{1ce}}$ and ${T_{1}}$ modalities and outperforms previous state-of-the-art methods.
+Accurate brain tumor segmentation is a labor-intensive and time-consuming task that requires automation to enhance its efficacy. Recent advanced techniques have shown promising results in segmenting brain tumors; however, their dependency on extensive multimodal magnetic resonance imaging (MRI) data limits their practicality in clinical environments where such data may not be readily available. To address this, we propose a novel multi-teacher cross-modal knowledge distillation framework, which utilizes the privileged multimodal data during training while relying solely on unimodal data for inference. Our framework is tailored to the unimodal segmentation of the $T_{1ce}$ MRI sequence, which is prevalently available in clinical practice and structurally akin to the $T_{1}$ modality, providing ample information for the segmentation task. Our framework introduces two learning strategies for knowledge distillation (KD): (1) performance-aware response-based KD and (2) cooperative deep supervision fusion learning (CDSFL). The first strategy involves dynamically assigning confidence weights to each teacher model based on its performance, ensuring that the KD is performance-driven, and the CDSFL module augments the learning capabilities of the multi-teacher models by fostering mutual learning. Moreover, the fused information is distilled into the student model to improve its deep supervision. Extensive experiments on BraTS datasets demonstrate that our framework achieves promising unimodal segmentation results on the $T_{1ce}$ and $T_{1}$ modalities and outperforms previous state-of-the-art methods.
   
 ---
   
@@ -53,7 +53,7 @@ python inference.py
 
 3D Visualization
 ---
-For visualizing the 3D MRI volumes of the brain tumor, first, predict the 3D volumes of MRI by executing the below script: 
+To visualize the 3D MRI volumes of the brain tumor, first, predict the 3D volumes of MRI by executing the below script: 
 ```python
 python visualize.py
 ```
@@ -65,6 +65,7 @@ Citation
 @article{AHMAD2024111854,
 title = {Multi-teacher cross-modal distillation with cooperative deep supervision fusion learning for unimodal segmentation},
 journal = {Knowledge-Based Systems},
+volume = {297},
 pages = {111854},
 year = {2024},
 issn = {0950-7051},
