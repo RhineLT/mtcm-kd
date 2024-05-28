@@ -17,6 +17,13 @@ The contribution of our work is stated below:
   - Performed extensive experiments and evaluated the framework on the BraTS datasets from 2018 to 2021. Our approach yields promising results and surpasses previous state-of-the-art models in unimodal brain tumor segmentation of $T_{1}$ and $T_{1ce}$ modalities.
 ---
 
+Model Architecture
+---
+Schematic diagram of the proposed MTCM-KD framework. 
+![CORA-UNet](https://github.com/saeedahmadicp/CORA-UNet/blob/master/src_images/model_architecture.jpg)
+
+---
+
 Dataset
 ---
 This work uses four BraTS datasets from 2018-2021. The first three BraTS datasets can be downloaded from [here](https://www.kaggle.com/datasets/andrewmvd/brain-tumor-segmentation-in-mri-brats-2015), While the BraTS-2021 dataset is available [here](https://www.kaggle.com/datasets/dschettler8845/brats-2021-task1).
