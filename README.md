@@ -20,7 +20,7 @@ The contribution of our work is stated below:
 Model Architecture
 ---
 Schematic diagram of the proposed MTCM-KD framework. 
-![MTCM-KD](https://github.com/saeedahmadicp/mtcm-kd/tree/main/images/mtcm_kd_architecture.jpg)
+![MTCM-KD](https://ars.els-cdn.com/content/image/1-s2.0-S095070512400488X-gr1_lrg.jpg)
 
 ---
 
