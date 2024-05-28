@@ -20,7 +20,7 @@ The contribution of our work is stated below:
 Model Architecture
 ---
 Schematic diagram of the proposed MTCM-KD framework. 
-![CORA-UNet](https://github.com/saeedahmadicp/CORA-UNet/blob/master/src_images/model_architecture.jpg)
+![MTCM-KD](https://github.com/saeedahmadicp/mtcm-kd/tree/main/images/mtcm_kd_architecture.jpg)
 
 ---
 
