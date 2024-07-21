@@ -1,1 +1,1 @@
-[{"train_samples": ["BraTS2021_00410", "BraTS2021_00610", "BraTS2021_00625", "BraTS2021_00652"]}]
+[{"train_samples": ["BraTS2021_00410", "BraTS2021_00610", "BraTS2021_00625", "BraTS2021_00652"],"valid_samples":["BraTS2021_00410", "BraTS2021_00610", "BraTS2021_00625", "BraTS2021_00652"]}]
